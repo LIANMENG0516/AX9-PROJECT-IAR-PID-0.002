@@ -15,6 +15,7 @@ void PowerOn_Sequence()
     OS_ERR err;
     PBUS_ON(1);
     PWR_CTL(1);
+    
     OSTimeDly(10, OS_OPT_TIME_DLY, &err);
     CTL_P12V_EN(1);
     CTL_P5V5_1_EN(1);
@@ -36,6 +37,13 @@ void PowerOn_Sequence()
     OSTimeDly(15, OS_OPT_TIME_DLY, &err);
     EN_FPGA_02(1);
     AFE_EN2(1);
+    
+    CTL_VPP1_VNN1_EN(1);    
+    CTL_VPP2_VNN2_EN(1);
+    Adjust_Voltage_Vpp1(1000);                                                  //开机默认值                                                  
+    Adjust_Voltage_Vpp2(500);                                                  
+    Adjust_Voltage_Vnn1_Vnn2(1000, 500);  
+    
 }       
 
 void PowerDown_Sequence()
@@ -191,7 +199,7 @@ void App_SysOnOff_Task()
     {      
         System_OnCtrl();
         System_OffCtrl();
-      
+
         OSTimeDlyHMSM(0, 0, 0, 10, OS_OPT_TIME_PERIODIC, &err);
     }
 }

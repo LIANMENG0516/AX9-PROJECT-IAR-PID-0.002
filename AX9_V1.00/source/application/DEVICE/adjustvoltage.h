@@ -10,6 +10,11 @@
 #define HIGHSET_CW  500
 #define LOOWSET_CW  250
 
+#define T_VPP1_0V       0
+#define T_VNN1_0V       0
+#define T_VPP2_0V       0
+#define T_VNN2_0V       0
+
 #define PCW_DAC_CLOSE  255
 #define NCW_DAC_CLOSE  255
 #define VPP1_DAC_CLOSE 2700
@@ -42,6 +47,8 @@ uint16_t Vpp_Calculate_AdjVol(uint16_t T_Data);
 uint16_t Vnn_Calculate_AdjVol(uint16_t T_Data);
 uint16_t Pcw_Calculate_AdjVol(uint16_t T_Data);
 uint16_t Ncw_Calculate_AdjVol(uint16_t T_Data);
+
+void Adjust_Voltage_Step_HV(void);
 
 
 #endif

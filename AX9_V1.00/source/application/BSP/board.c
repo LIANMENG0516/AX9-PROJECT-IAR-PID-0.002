@@ -137,8 +137,6 @@ void Board_Bsp_Init()
     Dac_config(DAC_Channel_2);
     
     Spi_Dac_Config();
-    Adjust_Hv_Reset();
-    Adjust_Cw_Reset();
     
     Fan_Config();
     TimerConfig();

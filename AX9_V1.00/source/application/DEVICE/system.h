@@ -119,7 +119,10 @@ typedef struct
     bool    DebugMessage;                                                       //调试信息开关
     
     uint8_t FPGA;
+    uint8_t AFE58;
+    uint8_t CPU;
     uint8_t MCU;
+    
 }SysTemper;
 
 typedef struct

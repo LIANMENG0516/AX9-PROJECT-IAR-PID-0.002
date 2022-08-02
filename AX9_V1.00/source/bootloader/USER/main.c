@@ -119,18 +119,12 @@ void PowerKey_Process()
 }
 
 
-
-
-
-
-
-
 int main()
 {
     if(*(__IO uint32_t *)SIGN_AREA_ADDR != 0xFFFFFFFF)
     {
         Board_Bsp_Init();
-        
+      
         FLASH_Unlock();
         FLASH_EraseSector(FLASH_Sector_5, VoltageRange_3);
         FLASH_EraseSector(FLASH_Sector_6, VoltageRange_3);

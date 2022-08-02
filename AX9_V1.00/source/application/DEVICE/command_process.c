@@ -246,11 +246,15 @@ void Cmd_ReadCompileInfo()
 
 void Cmd_ReadHardWareVersion()
 { 
+    uint8_t BoardVer[2];
+    
+    Read_UsPowerInfo(0x0000, BoardVer, 2);
+
     SenFrameCmd.Cid = CMD_RDHARDWARE_VERSION;
     SenFrameCmd.Len = 2;
 
-    SenFrameCmd.Data[0] = HardwareVersion_H;
-    SenFrameCmd.Data[1] = HardwareVersion_L;
+    SenFrameCmd.Data[0] = BoardVer[0];
+    SenFrameCmd.Data[1] = BoardVer[1];
     
     if(SysMsg.Cmd.Channel == ECCOM_CHANNEL)
     {
@@ -276,7 +280,17 @@ void Cmd_ReadHardWareVersion()
 
 void Cmd_WriteHardWareVersion()
 {        
-    Write_UsPowerId(&RcvFrameCmd.Data[0]);
+    uint8_t BoardInfo[128];
+    
+    for(int i=0; i<RcvFrameCmd.Len; i++)
+    {
+        BoardInfo[i] = RcvFrameCmd.Data[i]; 
+    }
+    
+    for(int i=0; i<RcvFrameCmd.Len; i=i+8)
+    {
+        Write_UsPowerInfo(0x0000, BoardInfo+i);
+    }
     
     SenFrameCmd.Cid = CMD_WDHARDWARE_VERSION;
     SenFrameCmd.Len = 1;
@@ -545,6 +559,8 @@ void Cmd_ReadTempeatureInfo()
 void Cmd_WriteTempeatureInfo()
 { 
     SysMsg.Temperature.FPGA = RcvFrameCmd.Data[0];
+    SysMsg.Temperature.AFE58 = RcvFrameCmd.Data[1];
+    SysMsg.Temperature.CPU = RcvFrameCmd.Data[2];
   
     SenFrameCmd.Cid = CMD_WDTEMPEATURE_INFO;
     SenFrameCmd.Len = 1;

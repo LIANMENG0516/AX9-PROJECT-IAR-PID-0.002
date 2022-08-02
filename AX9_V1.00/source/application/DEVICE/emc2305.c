@@ -272,25 +272,35 @@ void Fan_Emc2305_Control()
     uint8_t Speed;
     
     TempNow = SysMsg.Temperature.FPGA;
-        
+    
     if(TempNow != TempOld)
     {
         TempOld = TempNow;
         
-        if(TempNow <= TEMPERATURE_50)
+        if(TempNow <= TEMPERATURE_60)
         {
-            Speed = SPEED_NoMin;
+            Speed = SPEED_IDLE;
         }
-        else if(TempNow > TEMPERATURE_50 && TempNow < TEMPERATURE_95)
+        else if(TempNow > TEMPERATURE_60 && TempNow <= TEMPERATURE_70)
         {
-            Speed = SPEED_NoMin + (SPEED_NoMax - SPEED_NoMin) / (TEMPERATURE_95 - TEMPERATURE_50) * (TempNow - TEMPERATURE_50);
+            Speed = SPEED_IDLE + (SPEED_LEVEL1 - SPEED_IDLE) / (TEMPERATURE_70 - TEMPERATURE_60) * (TempNow - TEMPERATURE_60);
+        }
+        else if(TempNow > TEMPERATURE_70 && TempNow <= TEMPERATURE_80)
+        {
+            Speed = SPEED_LEVEL1 + (SPEED_LEVEL2 - SPEED_LEVEL1) / (TEMPERATURE_80 - TEMPERATURE_70) * (TempNow - TEMPERATURE_70);
+        }
+        else if(TempNow > TEMPERATURE_80 && TempNow <= TEMPERATURE_90)
+        {
+            Speed = SPEED_LEVEL2 + (SPEED_LEVEL3 - SPEED_LEVEL2) / (TEMPERATURE_90 - TEMPERATURE_80) * (TempNow - TEMPERATURE_80);
+        }
+        else if(TempNow > TEMPERATURE_90 && TempNow < TEMPERATURE_92)
+        {
+            Speed = SPEED_LEVEL4;
         }
         else
         {
-            Speed = SPEED_NoMax;
+            Speed = SPEED_LEVEL5;
         }
-        
-        Speed = 153;                                                            //DEBUG        
         
         Emc2305_WriteByte(EMC2305_10K_ADDR, FAN1_SETTING, Speed);
         Emc2305_WriteByte(EMC2305_10K_ADDR, FAN2_SETTING, Speed);
@@ -343,11 +353,11 @@ void Fan_Emc2305_Init()
     Emc2305_WriteByte(EMC2305_10K_ADDR, PWM45_BASE,   0x00);                    //设置PWM4、PWM5基础频率为26KHz
     Emc2305_WriteByte(EMC2305_10K_ADDR, PWM123_BASE,  0x00);                    //设置PWM1、PWM2、PWM3基础频率为26KHz
     
-    Emc2305_WriteByte(EMC2305_10K_ADDR, FAN1_SETTING, SPEED_NoMin);             //设置占空比
-    Emc2305_WriteByte(EMC2305_10K_ADDR, FAN2_SETTING, SPEED_NoMin);
-    Emc2305_WriteByte(EMC2305_10K_ADDR, FAN3_SETTING, SPEED_NoMin);
-    Emc2305_WriteByte(EMC2305_10K_ADDR, FAN4_SETTING, SPEED_NoMin);
-    Emc2305_WriteByte(EMC2305_10K_ADDR, FAN5_SETTING, SPEED_NoMin);
+    Emc2305_WriteByte(EMC2305_10K_ADDR, FAN1_SETTING, SPEED_IDLE);              //设置占空比
+    Emc2305_WriteByte(EMC2305_10K_ADDR, FAN2_SETTING, SPEED_IDLE);
+    Emc2305_WriteByte(EMC2305_10K_ADDR, FAN3_SETTING, SPEED_IDLE);
+    Emc2305_WriteByte(EMC2305_10K_ADDR, FAN4_SETTING, SPEED_IDLE);
+    Emc2305_WriteByte(EMC2305_10K_ADDR, FAN5_SETTING, SPEED_IDLE);
 }
 
 

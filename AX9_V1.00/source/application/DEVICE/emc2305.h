@@ -28,12 +28,28 @@
 #define FAN5_TACHREAD_HIGH  0x7e 
 #define FAN5_TACHREAD_LOW   0x7f 
 
-#define SPEED_NoMin         0x1c    
-#define SPEED_NoMax         0xff    
+
+
 #define SPEED_ERROR         960     //风扇转速低于960识别为硬件故障即无风扇或风扇损坏
 
-#define TEMPERATURE_95      95
-#define TEMPERATURE_50      50
+#define SPEED_IDLE          102     //40%
+#define SPEED_LEVEL1        127     //50% 
+#define SPEED_LEVEL2        153     //60%
+#define SPEED_LEVEL3        178     //70% 
+#define SPEED_LEVEL4        204     //80%
+#define SPEED_LEVEL5        255     //100%
+
+#define TEMPERATURE_60      60
+#define TEMPERATURE_70      70
+#define TEMPERATURE_80      80
+#define TEMPERATURE_90      90
+#define TEMPERATURE_92      92
+
+
+
+
+
+
 
 #define FAN_OK  0
 #define FAN_ERR 1
@@ -45,3 +61,4 @@ void Write_Emc2305_Reg(uint8_t id, uint16_t addr, uint16_t val);
 void Read_Emc2305_Reg(uint8_t id, uint8_t addr, uint8_t *buffer, uint8_t len);
 
 #endif
+    

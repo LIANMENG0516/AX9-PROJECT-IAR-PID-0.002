@@ -149,9 +149,9 @@ void Get_AdjHvMsg(uint8_t *buffer)
         
             #if SWITCH_ADJVOL_MODULE
             
-            CTL_VPP1_VNN1_EN(1);                                                                                                 //打开高压输出
+            CTL_VPP1_VNN1_EN(1); 
             CTL_VPP2_VNN2_EN(1);
-            
+
             SysMsg.AdjVol.T_McuDacHv1 = Vpp_Calculate_AdjVol(SysMsg.AdjVol.T_VPP1);                                              //计算要调节到目标电压时, 目标DAC的值
             SysMsg.AdjVol.T_SpiDacHv1 = Vnn_Calculate_AdjVol(SysMsg.AdjVol.T_VNN1);
             SysMsg.AdjVol.T_McuDacHv2 = Vpp_Calculate_AdjVol(SysMsg.AdjVol.T_VPP2);                
@@ -167,7 +167,7 @@ void Get_AdjHvMsg(uint8_t *buffer)
                     DAC_SetChannel1Data(DAC_Align_12b_R, SysMsg.AdjVol.P_McuDacHv1);                                                //调节VPP1至目标值
                     DAC_SoftwareTriggerCmd(DAC_Channel_1, ENABLE);                                                                  //软件触发DAC转换
                     
-                    DacHv_Tlv5626cd_ValueSet(SysMsg.AdjVol.P_SpiDacHv1, SysMsg.AdjVol.T_SpiDacHv2);                                 //触发VNN1转换
+                    DacHv_Tlv5626cd_ValueSet(SysMsg.AdjVol.P_SpiDacHv1, SysMsg.AdjVol.P_SpiDacHv2);                                 //触发VNN1转换
 
                     if(SysMsg.AdjVol.P_McuDacHv1 == SysMsg.AdjVol.T_McuDacHv1 && SysMsg.AdjVol.P_SpiDacHv1 == SysMsg.AdjVol.T_SpiDacHv1)                                    //调节完成，不在需要调节
                     {
@@ -180,17 +180,17 @@ void Get_AdjHvMsg(uint8_t *buffer)
                     SysMsg.AdjVol.P_McuDacHv2 = Step_HvAdjVol_Calcuation(SysMsg.AdjVol.T_McuDacHv2, SysMsg.AdjVol.P_McuDacHv2, MCU_DAC);  
                     SysMsg.AdjVol.P_SpiDacHv2 = Step_HvAdjVol_Calcuation(SysMsg.AdjVol.T_SpiDacHv2, SysMsg.AdjVol.P_SpiDacHv2, SPI_DAC);
                 
-                    DAC_SetChannel2Data(DAC_Align_12b_R, SysMsg.AdjVol.T_McuDacHv2);                                                //调节VPP2至目标值
+                    DAC_SetChannel2Data(DAC_Align_12b_R, SysMsg.AdjVol.P_McuDacHv2);                                                //调节VPP2至目标值
                     DAC_SoftwareTriggerCmd(DAC_Channel_2, ENABLE);                                                                  //软件触发DAC转换
                     
-                    DacHv_Tlv5626cd_ValueSet(SysMsg.AdjVol.P_SpiDacHv1, SysMsg.AdjVol.T_SpiDacHv2);                                 //触发VNN2转换
+                    DacHv_Tlv5626cd_ValueSet(SysMsg.AdjVol.P_SpiDacHv1, SysMsg.AdjVol.P_SpiDacHv2);                                 //触发VNN2转换
 
                     if(SysMsg.AdjVol.P_McuDacHv2 == SysMsg.AdjVol.T_McuDacHv2 && SysMsg.AdjVol.P_SpiDacHv2 == SysMsg.AdjVol.T_SpiDacHv2)                                    //调节完成，不在需要调节
                     {
                         SysMsg.AdjVol.HV2NeedChange = FALSE;
                     }
                 }
-            }       
+            } 
             
             #else
              
@@ -604,7 +604,7 @@ void App_AdjVol_Task()
 //                Adjust_Voltage_Close();
             }
             
-            if(SysMsg.AdjVol.R_VPP1 < (SysMsg.AdjVol.R_VPP2 - 200) || SysMsg.AdjVol.R_VNN1 < (SysMsg.AdjVol.R_VNN2 - 200))
+            if(SysMsg.AdjVol.R_VPP1 < (SysMsg.AdjVol.R_VPP2 - 100) || SysMsg.AdjVol.R_VNN1 < (SysMsg.AdjVol.R_VNN2 - 100))
             {
                 DEBUG_PRINTF(SysMsg.AdjVol.DebugMessage, "HV1 < HV2 : %d %d %d %d \r\n", SysMsg.AdjVol.R_VPP1, SysMsg.AdjVol.R_VNN1, SysMsg.AdjVol.R_VPP2, SysMsg.AdjVol.R_VNN2);            
                 SysMsg.AdjVol.VolMinitor = FALSE;

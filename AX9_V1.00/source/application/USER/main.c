@@ -14,7 +14,6 @@ int main()
 
     SystemStateInit();
     Board_Bsp_Init();
-    
 
     OSInit(&err);
     OS_CRITICAL_ENTER();

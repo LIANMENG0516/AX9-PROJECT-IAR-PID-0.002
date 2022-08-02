@@ -12,7 +12,7 @@ void App_Adc_Task()
 
     while(1)
     {		
-        Adc3_GetFixVoltage();
+        //Adc3_GetFixVoltage();
         Adc1_GetOverCurrentVoltage();
         OSTimeDlyHMSM(0, 0, 1, 0, OS_OPT_TIME_PERIODIC, &err);
     }

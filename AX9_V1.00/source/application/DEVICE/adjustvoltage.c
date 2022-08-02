@@ -46,24 +46,54 @@ uint16_t Ncw_Calculate_AdjVol(uint16_t T_Data)
 }
 
 void Adjust_Voltage_Vpp1(uint16_t T_Vpp1)
-{                                                             
-    SysMsg.AdjVol.P_McuDacHv1 = SysMsg.AdjVol.T_McuDacHv1 = Vpp_Calculate_AdjVol(T_Vpp1);                         //计算要调节到目标值时HVADJ1的值
-    DAC_SetChannel1Data(DAC_Align_12b_R, SysMsg.AdjVol.T_McuDacHv1);                   //调节VPP1至目标值
-    DAC_SoftwareTriggerCmd(DAC_Channel_1, ENABLE);                                   //软件触发DAC转换
+{          
+    if(T_Vpp1 != 0)
+    {
+        SysMsg.AdjVol.P_McuDacHv1 = SysMsg.AdjVol.T_McuDacHv1 = Vpp_Calculate_AdjVol(T_Vpp1);                         //计算要调节到目标值时HVADJ1的值
+    }
+    else
+    {
+        SysMsg.AdjVol.P_McuDacHv1 = VPP1_DAC_CLOSE;
+    }
+    DAC_SetChannel1Data(DAC_Align_12b_R, SysMsg.AdjVol.P_McuDacHv1);                                                    //调节VPP1至目标值
+    DAC_SoftwareTriggerCmd(DAC_Channel_1, ENABLE);                                                                      //软件触发DAC转换
 }
 
 void Adjust_Voltage_Vpp2(uint16_t T_Vpp2)
 {
-    SysMsg.AdjVol.P_McuDacHv2 = SysMsg.AdjVol.T_McuDacHv2 = Vpp_Calculate_AdjVol(T_Vpp2);                         //计算要调节到目标值时HVADJ3的值
-    DAC_SetChannel2Data(DAC_Align_12b_R, SysMsg.AdjVol.T_McuDacHv2);                   //调节VPP2至目标值
-    DAC_SoftwareTriggerCmd(DAC_Channel_2, ENABLE);                                   //软件触发DAC转换
+    if(T_Vpp2 != 0)
+    {
+        SysMsg.AdjVol.P_McuDacHv2 = SysMsg.AdjVol.T_McuDacHv2 = Vpp_Calculate_AdjVol(T_Vpp2);                           //计算要调节到目标值时HVADJ3的值
+    }
+    else
+    {
+        SysMsg.AdjVol.P_McuDacHv2 = VPP2_DAC_CLOSE;
+    }
+    DAC_SetChannel2Data(DAC_Align_12b_R, SysMsg.AdjVol.P_McuDacHv2);                                                    //调节VPP2至目标值
+    DAC_SoftwareTriggerCmd(DAC_Channel_2, ENABLE);                                                                      //软件触发DAC转换
 }
 
 void Adjust_Voltage_Vnn1_Vnn2(uint16_t T_Vnn1, uint16_t T_Vnn2)                                           
 {
-    SysMsg.AdjVol.P_SpiDacHv1 = SysMsg.AdjVol.T_SpiDacHv1 = Vnn_Calculate_AdjVol(T_Vnn1);
-    SysMsg.AdjVol.P_SpiDacHv2 = SysMsg.AdjVol.T_SpiDacHv2 = Vnn_Calculate_AdjVol(T_Vnn2);
-    DacHv_Tlv5626cd_ValueSet(SysMsg.AdjVol.T_SpiDacHv1, SysMsg.AdjVol.T_SpiDacHv2);
+    if(T_Vnn1 != 0)
+    {
+        SysMsg.AdjVol.P_SpiDacHv1 = SysMsg.AdjVol.T_SpiDacHv1 = Vnn_Calculate_AdjVol(T_Vnn1);
+    }
+    else
+    {
+        SysMsg.AdjVol.P_SpiDacHv1 = VNN1_DAC_CLOSE;
+    }
+
+    if(T_Vnn2 != 0)
+    {
+        SysMsg.AdjVol.P_SpiDacHv2 = SysMsg.AdjVol.T_SpiDacHv2 = Vnn_Calculate_AdjVol(T_Vnn2);
+    }
+    else
+    {
+        SysMsg.AdjVol.P_SpiDacHv2 = VNN2_DAC_CLOSE;
+    }
+    
+    DacHv_Tlv5626cd_ValueSet(SysMsg.AdjVol.P_SpiDacHv1, SysMsg.AdjVol.P_SpiDacHv2);
 }
 
 void Adjust_Voltage_Pcw_Ncw(uint16_t Pcw, uint16_t Ncw)                                           
@@ -71,7 +101,7 @@ void Adjust_Voltage_Pcw_Ncw(uint16_t Pcw, uint16_t Ncw)
     SysMsg.AdjVol.P_SpiDacPcw = SysMsg.AdjVol.T_SpiDacPcw = Pcw_Calculate_AdjVol(Pcw);
     SysMsg.AdjVol.P_SpiDacNcw = SysMsg.AdjVol.T_SpiDacNcw = Ncw_Calculate_AdjVol(Ncw);
     
-    DacCw_Tlv5626cd_ValueSet(SysMsg.AdjVol.T_SpiDacPcw, SysMsg.AdjVol.T_SpiDacNcw);
+    DacCw_Tlv5626cd_ValueSet(SysMsg.AdjVol.P_SpiDacPcw, SysMsg.AdjVol.P_SpiDacNcw);
 }
 
 void Adjust_Hv_Reset()
@@ -106,17 +136,10 @@ void Adjust_Cw_Reset()
 
 void Adjust_Voltage_Init()
 {  
-//    Adjust_Hv_Reset();
-//    Adjust_Voltage_Pcw_Ncw(250, 250); 
-//    CTL_VPP1_VNN1_EN(0);                                                        //打开高压输出
-//    CTL_VPP2_VNN2_EN(0);
-    
-    Adjust_Cw_Reset();   
-    CTL_VPP1_VNN1_EN(1);                                                        //打开高压输出
-    CTL_VPP2_VNN2_EN(1);
-    Adjust_Voltage_Vpp1(1000);                                                  //调节VPP1至目标值
-    Adjust_Voltage_Vpp2(1000);                                                  //调节VPP2至目标值
-    Adjust_Voltage_Vnn1_Vnn2(1000, 1000);                                       //调节VNN1, VNN2至目标值
+    Adjust_Hv_Reset();
+    Adjust_Cw_Reset();
+    CTL_VPP1_VNN1_EN(0);                                                        
+    CTL_VPP2_VNN2_EN(0);
 }
 
 void Adjust_Voltage_Close()
@@ -128,8 +151,7 @@ void Adjust_Voltage_Close()
 }
 
 void Adjust_Voltage_HV()                                                        //高压调压处理流程
-{       
-    Adjust_Cw_Reset();   
+{     
     CTL_VPP1_VNN1_EN(1);                                                        //打开高压输出
     CTL_VPP2_VNN2_EN(1);
     Adjust_Voltage_Vpp1(SysMsg.AdjVol.T_VPP1);                                  //调节VPP1至目标值
@@ -140,13 +162,11 @@ void Adjust_Voltage_HV()                                                        
 void Adjust_Voltage_CW()                                                        //低压调压处理流程
 {
     CTL_VPP1_VNN1_EN(1);                                                        //打开高压输出
-    CTL_VPP2_VNN2_EN(0);
+    CTL_VPP2_VNN2_EN(1);
     Adjust_Voltage_Vpp1(SysMsg.AdjVol.T_VPP1);                                  //调节VPP1至目标值   
-    Adjust_Voltage_Vpp2(VPP2_DAC_CLOSE);
-    Adjust_Voltage_Vnn1_Vnn2(SysMsg.AdjVol.T_VNN1, VNN2_DAC_CLOSE);  
+    Adjust_Voltage_Vpp2(0);
+    Adjust_Voltage_Vnn1_Vnn2(SysMsg.AdjVol.T_VNN1, 0);  
     Adjust_Voltage_Pcw_Ncw(SysMsg.AdjVol.T_VPP2, SysMsg.AdjVol.T_VNN2);
 }
-
-
 
 

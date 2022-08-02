@@ -15,17 +15,17 @@
         <FirstRun>0</FirstRun>
         <MemConfigValue>D:\Program Files\IAR Systems\Embedded Workbench 9.0\arm\CONFIG\debugger\ST\STM32F405ZG.ddf</MemConfigValue>
     </PlDriver>
-    <ArmDriver>
-        <EnableCache>0</EnableCache>
-    </ArmDriver>
     <JLinkDriver>
         <jlinkResetStyle>12</jlinkResetStyle>
         <jlinkResetStrategy>0</jlinkResetStrategy>
         <LeaveTargetRunning>_ 0</LeaveTargetRunning>
         <CStepIntDis>_ 0</CStepIntDis>
     </JLinkDriver>
+    <ArmDriver>
+        <EnableCache>0</EnableCache>
+    </ArmDriver>
     <DebugChecksum>
-        <Checksum>2527152650</Checksum>
+        <Checksum>616506801</Checksum>
     </DebugChecksum>
     <Exceptions>
         <StopOnUncaught>_ 0</StopOnUncaught>
@@ -144,8 +144,7 @@
         <mode>0</mode>
     </DisassembleMode>
     <Breakpoints2>
-        <Bp0>_ 0 "EMUL_DATA" "Tach2" 0 0 0 0 4294967295</Bp0>
-        <Count>1</Count>
+        <Count>0</Count>
     </Breakpoints2>
     <Aliases>
         <Count>0</Count>

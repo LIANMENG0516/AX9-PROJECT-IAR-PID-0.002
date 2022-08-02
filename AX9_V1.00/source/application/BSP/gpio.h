@@ -205,7 +205,7 @@
 //CHARGE_CTL
 #define CHARGE_CTL_PORT           GPIOD
 #define CHARGE_CTL_PIN            GPIO_Pin_11
-#define CHARGE_CTL(x)             x ? GPIO_SetBits(CHARGE_CTL_PORT, CHARGE_CTL_PIN) : GPIO_ResetBits(CHARGE_CTL_PORT, CHARGE_CTL_PIN)
+#define CHARGE_CTL(x)             x ? GPIO_ResetBits(CHARGE_CTL_PORT, CHARGE_CTL_PIN) : GPIO_SetBits(CHARGE_CTL_PORT, CHARGE_CTL_PIN)
 
 //C_VDD_P5V
 #define C_VDD_P5V_PORT            GPIOD

@@ -96,10 +96,6 @@ void Gpio_Config()
     //SPI3_SCK
     GPIO_PinAFConfig(SPI3_PORT_SCK, GPIO_PinSource10, GPIO_AF_SPI3);
     Gpio_Init(SPI3_PORT_SCK, SPI3_PIN_SCK, GPIO_Mode_AF, GPIO_OType_PP, GPIO_PuPd_UP);
-    
-    //SPI3_MISO
-    GPIO_PinAFConfig(SPI3_PORT_MISO, GPIO_PinSource11, GPIO_AF_SPI3);
-    Gpio_Init(SPI3_PORT_MISO, SPI3_PIN_MISO, GPIO_Mode_AF, GPIO_OType_PP, GPIO_PuPd_UP);
 
     //SPI3_MOSI
     GPIO_PinAFConfig(SPI3_PORT_MOSI, GPIO_PinSource12, GPIO_AF_SPI3);
@@ -164,7 +160,7 @@ void Gpio_Config()
 
     //SV_CTL_IN
     Gpio_Init(SV_CTL_IN_PORT, SV_CTL_IN_PIN, GPIO_Mode_OUT, GPIO_OType_PP, GPIO_PuPd_NOPULL);
-    SV_CTL_IN(0);
+    SV_CTL_IN(1);
 
     //V_PROE1
     Gpio_Init(V_PROE1_PORT, V_PROE1_PIN, GPIO_Mode_IN, GPIO_OType_PP, GPIO_PuPd_UP);
@@ -196,7 +192,7 @@ void Gpio_Config()
 
     //US_PWR_ID
     Gpio_Init(US_PWR_ID_PORT, US_PWR_ID_PIN, GPIO_Mode_OUT, GPIO_OType_OD, GPIO_PuPd_NOPULL);
-    //US_PWR_ID_1();
+    US_PWR_ID_1();
     
     //SUS_S4
     Gpio_Init(SUS_S4_PORT, SUS_S4_PIN, GPIO_Mode_IN, GPIO_OType_PP, GPIO_PuPd_NOPULL);

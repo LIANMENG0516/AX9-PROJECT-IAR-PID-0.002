@@ -1,62 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <userOverrides>
     <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID\AX9_V1.00\source\application\APP\app.c</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID\AX9_V1.00\source\application\APP\app_adjvol.c</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID\AX9_V1.00\source\application\APP\app_adjvol.h</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID\AX9_V1.00\source\application\APP\app_com.c</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID\AX9_V1.00\source\application\APP\app_comdebug.c</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID\AX9_V1.00\source\application\APP\app_sysonoff.c</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID\AX9_V1.00\source\application\BSP\adc.c</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID\AX9_V1.00\source\application\BSP\board.c</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID\AX9_V1.00\source\application\BSP\gpio.c</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID\AX9_V1.00\source\application\BSP\systick.c</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID\AX9_V1.00\source\application\DEVICE\adjustvoltage.c</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID\AX9_V1.00\source\application\DEVICE\ds2431.c</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID\AX9_V1.00\source\application\DEVICE\emc2305.c</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID\AX9_V1.00\source\application\DEVICE\system.h</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
         <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\APP\app.c</path>
         <encoding>System</encoding>
     </override>
@@ -65,19 +9,7 @@
         <encoding>System</encoding>
     </override>
     <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\APP\app_adjvol.h</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\APP\app_com.c</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
         <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\APP\app_sysonoff.c</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\BSP\adc.c</path>
         <encoding>System</encoding>
     </override>
     <override>
@@ -85,15 +17,23 @@
         <encoding>System</encoding>
     </override>
     <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\BSP\gouble.h</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
         <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\BSP\gpio.c</path>
         <encoding>System</encoding>
     </override>
     <override>
+        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\BSP\systick.c</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\BSP\timer.c</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
         <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\DEVICE\adjustvoltage.c</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\DEVICE\ds2431.c</path>
         <encoding>System</encoding>
     </override>
     <override>
@@ -106,10 +46,6 @@
     </override>
     <override>
         <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\DEVICE\system.h</path>
-        <encoding>System</encoding>
-    </override>
-    <override>
-        <path>C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\DEVICE\tmp468.c</path>
         <encoding>System</encoding>
     </override>
 </userOverrides>

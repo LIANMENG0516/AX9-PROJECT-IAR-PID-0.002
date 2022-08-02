@@ -87,6 +87,8 @@ System_MsgStruct SysMsg = {
 
     .Temperature.DebugMessage           = FALSE,
     .Temperature.FPGA                   = 0,
+    .Temperature.AFE58                  = 0,
+    .Temperature.CPU                    = 0,
     .Temperature.MCU                    = 0,
     
     .Fan.DebugMessage                   = FALSE,
@@ -216,6 +218,8 @@ void SystemStateInit()
 
     SysMsg.Temperature.DebugMessage     = FALSE;
     SysMsg.Temperature.FPGA             = 0;
+    SysMsg.Temperature.AFE58            = 0,
+    SysMsg.Temperature.CPU              = 0,
     SysMsg.Temperature.MCU              = 0;
     
     SysMsg.Fan.DebugMessage             = FALSE;

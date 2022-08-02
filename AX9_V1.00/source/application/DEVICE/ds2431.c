@@ -11,8 +11,8 @@ void US_PWR_ID_OUT()
     GPIO_InitStruct.GPIO_Pin = GPIO_Pin_11;
     GPIO_InitStruct.GPIO_Mode = GPIO_Mode_OUT;				
     GPIO_InitStruct.GPIO_Speed = GPIO_High_Speed;		
-    GPIO_InitStruct.GPIO_OType = GPIO_OType_OD;				
-    GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;			
+    GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;				
+    GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;			
     GPIO_Init(GPIOE, &GPIO_InitStruct);	
 }
 
@@ -28,7 +28,10 @@ void US_PWR_ID_IN()
     GPIO_InitStruct.GPIO_OType = GPIO_OType_OD;				
     GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;			
     GPIO_Init(GPIOE, &GPIO_InitStruct);	
+    
+    GPIO_SetBits(GPIOE, GPIO_Pin_11);
 }
+
 
 
 uint8_t DS2431_Reset()
@@ -58,11 +61,11 @@ void DS2431_WriteByte(uint8_t data)
         delay_us_os(10);
         if(data & 0x01)
         {
-                US_PWR_ID_1();
+            US_PWR_ID_1();
         }
         else
         {
-                US_PWR_ID_0();
+            US_PWR_ID_0();
         }
         delay_us_os(60);
 
@@ -73,10 +76,9 @@ void DS2431_WriteByte(uint8_t data)
 uint8_t DS2431_ReadByte()
 {
     uint8_t data = 0, mask = 0x01;
-    
 
     for(int i=0; i<8; i++)
-	{
+    {
         US_PWR_ID_OUT(); 
         US_PWR_ID_1(); 
         delay_us_os(2);
@@ -100,54 +102,83 @@ uint8_t DS2431_ReadByte()
     return data;
 }
 
-uint8_t DS2431_WriteData(uint8_t addr, uint8_t *buffer)
-{
-    uint16_t status, crc16;
-    
-    if(DS2431_Reset())
+uint8_t state, crch, crcl;
+
+uint8_t DS2431_WirteData(uint16_t addr, uint8_t *pBuf)
+{     
+    if(DS2431_Reset())                                  //Ð´²Ý¸å
     {
         return 1;
     }
-    
     DS2431_WriteByte(0xCC);
     DS2431_WriteByte(0x0F);
-    DS2431_WriteByte(addr);
-    DS2431_WriteByte(0x00);
-    
-    for(uint8_t i=0; i<8; i++)
+    DS2431_WriteByte(addr & 0xFF);
+    DS2431_WriteByte(addr >> 8);
+    for(int i=0; i<8; i++)
     {
-        DS2431_WriteByte(buffer[i]);
+        DS2431_WriteByte(pBuf[i]);
     }
     
-    crc16 = DS2431_ReadByte();
-    crc16 |= DS2431_ReadByte() << 8;
+    crch = DS2431_ReadByte();
+    crcl = DS2431_ReadByte();
+    
 
-    if(DS2431_Reset())
+    if(DS2431_Reset())                                  //¶Á²Ý¸å
     {
         return 1;
     }
-
+    DS2431_WriteByte(0xCC);
+    DS2431_WriteByte(0xAA);
+    state = DS2431_ReadByte();
+    if(state != addr & 0xFF)
+    {
+        return 1;
+    }
+    state = DS2431_ReadByte();
+    if(state != (addr >> 8))
+    {
+        return 1;
+    }
+    state = DS2431_ReadByte();
+    if(state != 0x07)
+    {
+        return 1;
+    }
+    for(int i=0; i<8; i++)
+    {
+        state = DS2431_ReadByte();
+        if(state != pBuf[i])
+        {
+            return 1;
+        }
+    }
+    crch = DS2431_ReadByte();
+    crcl = DS2431_ReadByte();
+    
+    if(DS2431_Reset())                                  //¸´ÖÆ²Ý¸åµ½¼Ä´æÆ÷
+    {
+        return 1; 
+    }
     DS2431_WriteByte(0xCC);
     DS2431_WriteByte(0x55);
-    DS2431_WriteByte(addr);
-    DS2431_WriteByte(0x00);
+    DS2431_WriteByte(addr & 0xFF);
+    DS2431_WriteByte(addr >> 8);
     DS2431_WriteByte(0x07);
-
-
-    US_PWR_ID_1();
-    delay_us_os(800);
-
-    status = DS2431_ReadByte();
-
-    if(status == 0xAA)
+    
+    US_PWR_ID_IN();
+    Delay_ms(10);
+    
+    state = DS2431_ReadByte();
+    
+    if(state != 0xAA)
     {
-        US_PWR_ID_1();
+        return 1;
     }
     
-    return 0;
+    return 0;  
 }
 
-uint8_t DS2431_ReadData(uint8_t addr, uint8_t *buffer)
+uint8_t DS2431_ReadData(uint8_t addr, uint8_t *pBuf, uint8_t len)
 {
     if(DS2431_Reset())
     {
@@ -155,12 +186,12 @@ uint8_t DS2431_ReadData(uint8_t addr, uint8_t *buffer)
     }
     DS2431_WriteByte(0xCC);
     DS2431_WriteByte(0xF0);
-    DS2431_WriteByte(addr);
-    DS2431_WriteByte(0x00);
+    DS2431_WriteByte(addr & 0xFF);
+    DS2431_WriteByte(addr >> 8);
     
-    for(uint8_t i=0; i<16; i++)
+    for(uint8_t i=0; i<len; i++)
     {
-        buffer[i] = DS2431_ReadByte();
+        pBuf[i] = DS2431_ReadByte();
     }
     
     if(DS2431_Reset())
@@ -171,39 +202,16 @@ uint8_t DS2431_ReadData(uint8_t addr, uint8_t *buffer)
     return 0;
 }
 
-uint8_t UsPowerId[13] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-void Write_UsPowerId(uint8_t *buffer)
-{    
-    for(uint8_t i=0; i<16; i++)
-    {
-        UsPowerId[i] = *buffer++;
-    }
-
-    DS2431_WriteData(0, UsPowerId);
-}
-
-void Read_UsPowerId(uint8_t *buffer)
+void Write_UsPowerInfo(uint8_t addr, uint8_t *pBuf)
 {
-    DS2431_ReadData(0, buffer);
-
+    DS2431_WirteData(addr, pBuf);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void Read_UsPowerInfo(uint8_t addr, uint8_t *pBuf, uint8_t len)
+{
+    DS2431_ReadData(addr, pBuf, len);
+}
 
 
 

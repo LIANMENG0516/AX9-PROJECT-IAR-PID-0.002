@@ -17,13 +17,13 @@ void Spi_config(SPI_TypeDef* SPIx, uint16_t DataSize, uint16_t Cpol, uint16_t Cp
     else if(SPIx == SPI6)
             RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI6, ENABLE);
     
-    SPI_InitStruct.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
+    SPI_InitStruct.SPI_Direction = SPI_Direction_1Line_Tx;
     SPI_InitStruct.SPI_Mode = SPI_Mode_Master;
     SPI_InitStruct.SPI_DataSize = DataSize;
     SPI_InitStruct.SPI_CPOL = Cpol;
     SPI_InitStruct.SPI_CPHA = Cpha;
     SPI_InitStruct.SPI_NSS = SPI_NSS_Soft;
-    SPI_InitStruct.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_256;
+    SPI_InitStruct.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_2;
     SPI_InitStruct.SPI_FirstBit = SPI_FirstBit_MSB;
     SPI_InitStruct.SPI_CRCPolynomial = 7;
 
@@ -40,7 +40,7 @@ uint8_t SPI_ReadWriteByte(SPI_TypeDef* SPIx, uint8_t data)
         retry++;
         if(retry > 200)
         {
-                return 0;
+            return 0;
         }	
     }		
     SPI_I2S_SendData(SPIx, data);
@@ -50,7 +50,7 @@ uint8_t SPI_ReadWriteByte(SPI_TypeDef* SPIx, uint8_t data)
         retry++;
         if(retry > 200)
         {
-                return 0;
+            return 0;
         }
     }	  						    
     return SPI_I2S_ReceiveData(SPIx);		    
@@ -65,7 +65,7 @@ uint8_t SPI_WriteHalfWord(SPI_TypeDef* SPIx, uint16_t data)
         retry++;
         if(retry > 2000)
         {
-                return 0;
+            return 0;
         }	
     }		
     SPI_I2S_SendData(SPIx, data);

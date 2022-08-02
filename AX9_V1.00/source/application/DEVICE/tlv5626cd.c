@@ -14,15 +14,15 @@ void DacHv_Tlv5626cd_ValueSet(uint8_t dataA, uint8_t dataB)
     Delay_Nop(4000);
     CTL_SPI3_CS2(1);
     
-    Delay_Nop(2000);
-    
+    Delay_Nop(2000);    
+
     CTL_SPI3_CS2(0);
     SPI_WriteHalfWord(SPI3, (0x1000 | (dataB << 4)));
     Delay_Nop(4000);
     CTL_SPI3_CS2(1);
 
     Delay_Nop(2000);
-    
+
     CTL_SPI3_CS2(0);
     SPI_WriteHalfWord(SPI3, (0x8000 | (dataA << 4)));
     Delay_Nop(4000);
@@ -50,6 +50,45 @@ void DacCw_Tlv5626cd_ValueSet(uint8_t dataA, uint8_t dataB)
     Delay_Nop(4000);
     CTL_SPI3_CS4(1);
 }
+
+
+//void DacHv_Tlv5626cd_ValueSet(uint8_t dataA, uint8_t dataB)
+//{      
+//    CTL_SPI3_CS2(0);
+//    SPI_WriteHalfWord(SPI3, TLV562CD_MODE);
+//    CTL_SPI3_CS2(1);
+//    
+//    Delay_Nop(1000);
+//    
+//    CTL_SPI3_CS2(0);
+//    SPI_WriteHalfWord(SPI3, (0x1000 | (dataB << 4)));
+//    CTL_SPI3_CS2(1);
+//
+//    Delay_Nop(1000);
+//    
+//    CTL_SPI3_CS2(0);
+//    SPI_WriteHalfWord(SPI3, (0x8000 | (dataA << 4)));
+//    CTL_SPI3_CS2(1);
+//}
+//
+//void DacCw_Tlv5626cd_ValueSet(uint8_t dataA, uint8_t dataB)
+//{ 
+//    CTL_SPI3_CS4(0);
+//    SPI_WriteHalfWord(SPI3, TLV562CD_MODE);
+//    CTL_SPI3_CS4(1);
+//    
+//    Delay_Nop(1000);
+//    
+//    CTL_SPI3_CS4(0);
+//    SPI_WriteHalfWord(SPI3, (0x1000 | (dataB << 4)));
+//    CTL_SPI3_CS4(1);
+//
+//    Delay_Nop(1000);
+//    
+//    CTL_SPI3_CS4(0);
+//    SPI_WriteHalfWord(SPI3, (0x8000 | (dataA << 4)));
+//    CTL_SPI3_CS4(1);
+//}
 
 
 
