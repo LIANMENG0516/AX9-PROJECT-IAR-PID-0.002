@@ -1,0 +1,14 @@
+INPUT(
+./debug\main.o
+./debug\widget.o
+./debug\qcustomplot.o
+./debug\serialportthread.o
+./debug\dialog.o
+./debug\widgetdown.o
+./debug\qrc_res.o
+./debug\moc_widget.o
+./debug\moc_qcustomplot.o
+./debug\moc_serialportthread.o
+./debug\moc_dialog.o
+./debug\moc_widgetdown.o
+);

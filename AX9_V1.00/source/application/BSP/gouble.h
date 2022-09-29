@@ -44,7 +44,9 @@
 #include "app_usb.h"
 #include "app_com.h"
 #include "app_timer.h"
-#include "app_adjvol.h"
+#include "app_adjvolcw.h"
+#include "app_adjvolhv1.h"
+#include "app_adjvolhv2.h"
 #include "app_sysonoff.h"
 #include "app_comdebug.h"
 #include "app_pwrmanager.h"
@@ -53,30 +55,37 @@
 
 #define USE_UCOSIII
 
-#define USE_DEBUG                           1       //调试总开关
-#define DEBUG_COMMAND                       1       //命令调试开关
-#define DEBUG_STRING                        0       //字符串调试开关     
+#define USE_DEBUG                           1       //调试开关
 
-#define APP_ADJVOL_TASK_PRIO                20
-#define APP_ADJVOL_STK_SIZE                 1024
 
-#define APP_FAN_TASK_PRIO                   24
-#define APP_FAN_STK_SIZE                    256
 
-#define APP_SYSONOFF_TASK_PRIO              25
-#define APP_SYSONOFF_STK_SIZE               512
+#define APP_ADJVOLHV1_TASK_PRIO             20
+#define APP_ADJVOLHV1_STK_SIZE              1024
 
-#define APP_TEMPERATURE_TASK_PRIO           26
+#define APP_ADJVOLHV2_TASK_PRIO             24
+#define APP_ADJVOLHV2_STK_SIZE              1024
+
+#define APP_ADJVOLCW_TASK_PRIO              25
+#define APP_ADJVOLCW_STK_SIZE               1024
+
+#define APP_USB_TASK_PRIO                   26
+#define APP_USB_STK_SIZE                    256
+
+#define APP_TEMPERATURE_TASK_PRIO           27
 #define APP_TEMPERATURE_STK_SIZE            256
 
-#define APP_ADC_TASK_PRIO                   27
+#define APP_ADC_TASK_PRIO                   28
 #define APP_ADC_STK_SIZE                    256
 
-#define APP_PWRMANAGER_TASK_PRIO            28
+#define APP_PWRMANAGER_TASK_PRIO            29
 #define APP_PWRMANAGER_STK_SIZE             256
 
-#define APP_USB_TASK_PRIO                   35
-#define APP_USB_STK_SIZE                    256
+
+#define APP_SYSONOFF_TASK_PRIO              34
+#define APP_SYSONOFF_STK_SIZE               512
+
+#define APP_FAN_TASK_PRIO                   35
+#define APP_FAN_STK_SIZE                    256
 
 #define APP_COMEC_TASK_PRIO                 36
 #define APP_COMEC_STK_SIZE                  256

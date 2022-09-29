@@ -115,7 +115,9 @@ C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application
   C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\USER\..\APP\app_usb.h \
   C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\USER\..\APP\app_com.h \
   C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\USER\..\APP\app_timer.h \
-  C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\USER\..\APP\app_adjvol.h \
+  C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\USER\..\APP\app_adjvolcw.h \
+  C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\USER\..\APP\app_adjvolhv1.h \
+  C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\USER\..\APP\app_adjvolhv2.h \
   C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\USER\..\APP\app_sysonoff.h \
   C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\USER\..\APP\app_comdebug.h \
   C:\Users\LIANMENG\Desktop\AX9-PROJECT-IAR-PID-0.002\AX9_V1.00\source\application\USER\..\APP\app_pwrmanager.h \

@@ -4,7 +4,7 @@ extern System_MsgStruct SysMsg;
 
 void TimerBase2_5_Config(TIM_TypeDef* TIMx, uint16_t period, uint16_t prescaler)
 {
-	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;   
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;   
 	
     if(TIMx == TIM2)
         RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);  
@@ -33,13 +33,40 @@ void TimerConfig()
 void TIM2_IRQHandler_CallBack()
 {
     TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
-    if(SysMsg.AdjVol.TimeFlag == TRUE)
+    if(SysMsg.AdjVol.Hv1TimerOpen == TRUE)
     {
-        SysMsg.AdjVol.Time++;
+        SysMsg.AdjVol.Hv1Time++;
     }
     else
     {
-        SysMsg.AdjVol.Time = 0;
+        SysMsg.AdjVol.Hv1Time = 0;
+    }
+    
+    if(SysMsg.AdjVol.Hv2TimerOpen == TRUE)
+    {
+        SysMsg.AdjVol.Hv2Time++;
+    }
+    else
+    {
+        SysMsg.AdjVol.Hv2Time = 0;
+    }
+    
+    if(SysMsg.AdjVol.CwTimerOpen == TRUE)
+    {
+        SysMsg.AdjVol.CwTime++;
+    }
+    else
+    {
+        SysMsg.AdjVol.CwTime = 0;
+    }
+    
+    if(SysMsg.AdjVol.TestTimerOpen == TRUE)
+    {
+        SysMsg.AdjVol.TestTime++;
+    }
+    else
+    {
+        SysMsg.AdjVol.TestTime = 0;
     }
 }
 

@@ -146,8 +146,6 @@ void Adjust_Voltage_Close()
 {
     Adjust_Hv_Reset();
     Adjust_Cw_Reset();
-    CTL_VPP1_VNN1_EN(0);                                                        //打开高压输出
-    CTL_VPP2_VNN2_EN(0);
 }
 
 void Adjust_Voltage_HV()                                                        //高压调压处理流程
@@ -164,9 +162,81 @@ void Adjust_Voltage_CW()                                                        
     CTL_VPP1_VNN1_EN(1);                                                        //打开高压输出
     CTL_VPP2_VNN2_EN(1);
     Adjust_Voltage_Vpp1(SysMsg.AdjVol.T_VPP1);                                  //调节VPP1至目标值   
-    Adjust_Voltage_Vpp2(0);
-    Adjust_Voltage_Vnn1_Vnn2(SysMsg.AdjVol.T_VNN1, 0);  
-    Adjust_Voltage_Pcw_Ncw(SysMsg.AdjVol.T_VPP2, SysMsg.AdjVol.T_VNN2);
+    Adjust_Voltage_Vpp2(SysMsg.AdjVol.T_VPP2);                                  //关闭VPP2
+    Adjust_Voltage_Vnn1_Vnn2(SysMsg.AdjVol.T_VNN1, SysMsg.AdjVol.T_VNN2);       //调节VNN1至目标值, 关闭VNN2
+    Adjust_Voltage_Pcw_Ncw(SysMsg.AdjVol.T_PCW, SysMsg.AdjVol.T_NCW);           
 }
+
+uint16_t Step_HvAdjVol_Calcuation(uint16_t Target, uint16_t Precent, u8 DacState)       //步进调压值计算
+{
+    uint16_t temp = 0, stepUp = 0, stepDown = 0;
+    
+    if(DacState == MCU_DAC)                                                             //片内MCU_DAC调节步进值
+    {
+        stepUp = STEP_DACMCU_UP;
+        stepDown = STEP_DACMCU_DOWN;
+    }
+    else                                                                                //片外SPI_DAC调节步进值
+    {
+        stepUp = STEP_SPIMCU_UP;
+        stepDown = STEP_SPIMCU_DOWN;
+    }
+  
+    if(Target > Precent)
+    {
+        if(Target - Precent > stepUp)  
+        {
+            temp = Precent + stepUp;
+        }
+        else
+        {
+            temp = Target;
+        }
+    }
+    else if(Precent > Target)
+    {
+        if(Precent - Target > stepDown)
+        {
+            temp = Precent - stepDown;
+        }
+        else
+        {
+            temp = Target;
+        }
+    }
+    else
+    {
+        temp = Target;
+    }
+
+    return temp;
+}
+
+void Calc_TarVolCw_AlowRange()
+{    
+    SysMsg.AdjVol.MAX_PCW = SysMsg.AdjVol.T_PCW + 100;
+    SysMsg.AdjVol.MIN_PCW = SysMsg.AdjVol.T_PCW - 100;
+    SysMsg.AdjVol.MAX_NCW = SysMsg.AdjVol.T_NCW + 100;
+    SysMsg.AdjVol.MIN_NCW = SysMsg.AdjVol.T_NCW - 100;
+}
+
+void Calc_TarVolHv1_AlowRange()
+{    
+    SysMsg.AdjVol.MAX_VPP1 = SysMsg.AdjVol.T_VPP1 + 100;
+    SysMsg.AdjVol.MIN_VPP1 = SysMsg.AdjVol.T_VPP1 - 100;
+    SysMsg.AdjVol.MAX_VNN1 = SysMsg.AdjVol.T_VPP1 + 100;
+    SysMsg.AdjVol.MIN_VNN1 = SysMsg.AdjVol.T_VPP1 - 100;
+}
+
+void Calc_TarVolHv2_AlowRange()
+{    
+    SysMsg.AdjVol.MAX_VPP2 = SysMsg.AdjVol.T_VPP2 + 100;
+    SysMsg.AdjVol.MIN_VPP2 = SysMsg.AdjVol.T_VPP2 - 100;
+    SysMsg.AdjVol.MAX_VNN2 = SysMsg.AdjVol.T_VPP2 + 100;
+    SysMsg.AdjVol.MIN_VNN2 = SysMsg.AdjVol.T_VPP2 - 100;
+}
+
+
+
 
 

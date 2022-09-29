@@ -268,53 +268,86 @@ extern System_MsgStruct SysMsg;
 void Fan_Emc2305_Control()
 {
     static uint8_t TempNow = 0, TempOld = 0;
-    
+        
     uint8_t Speed;
     
     TempNow = SysMsg.Temperature.FPGA;
-    
-    if(TempNow != TempOld)
+        
+    if(SysMsg.Fan.CntlMode == 0)
     {
-        TempOld = TempNow;
-        
-        if(TempNow <= TEMPERATURE_60)
+        if(TempNow != TempOld)
         {
-            Speed = SPEED_IDLE;
+            TempOld = TempNow;
+            
+            if(TempNow <= TEMPERATURE_60)
+            {
+                Speed = SPEED_IDLE;
+            }
+            else if(TempNow > TEMPERATURE_60 && TempNow <= TEMPERATURE_70)
+            {
+                Speed = SPEED_IDLE + (SPEED_LEVEL1 - SPEED_IDLE) / (TEMPERATURE_70 - TEMPERATURE_60) * (TempNow - TEMPERATURE_60);
+            }
+            else if(TempNow > TEMPERATURE_70 && TempNow <= TEMPERATURE_80)
+            {
+                Speed = SPEED_LEVEL1 + (SPEED_LEVEL2 - SPEED_LEVEL1) / (TEMPERATURE_80 - TEMPERATURE_70) * (TempNow - TEMPERATURE_70);
+            }
+            else if(TempNow > TEMPERATURE_80 && TempNow <= TEMPERATURE_90)
+            {
+                Speed = SPEED_LEVEL2 + (SPEED_LEVEL3 - SPEED_LEVEL2) / (TEMPERATURE_90 - TEMPERATURE_80) * (TempNow - TEMPERATURE_80);
+            }
+            else if(TempNow > TEMPERATURE_90 && TempNow <= TEMPERATURE_92)
+            {
+                Speed = SPEED_LEVEL4;
+            }
+            else
+            {
+                Speed = SPEED_LEVEL5;
+            }
+            
+            Emc2305_WriteByte(EMC2305_10K_ADDR, FAN1_SETTING, Speed);
+            Emc2305_WriteByte(EMC2305_10K_ADDR, FAN2_SETTING, Speed);
+            Emc2305_WriteByte(EMC2305_10K_ADDR, FAN3_SETTING, Speed);
+            Emc2305_WriteByte(EMC2305_10K_ADDR, FAN4_SETTING, Speed);
+            Emc2305_WriteByte(EMC2305_10K_ADDR, FAN5_SETTING, Speed);
         }
-        else if(TempNow > TEMPERATURE_60 && TempNow <= TEMPERATURE_70)
-        {
-            Speed = SPEED_IDLE + (SPEED_LEVEL1 - SPEED_IDLE) / (TEMPERATURE_70 - TEMPERATURE_60) * (TempNow - TEMPERATURE_60);
-        }
-        else if(TempNow > TEMPERATURE_70 && TempNow <= TEMPERATURE_80)
-        {
-            Speed = SPEED_LEVEL1 + (SPEED_LEVEL2 - SPEED_LEVEL1) / (TEMPERATURE_80 - TEMPERATURE_70) * (TempNow - TEMPERATURE_70);
-        }
-        else if(TempNow > TEMPERATURE_80 && TempNow <= TEMPERATURE_90)
-        {
-            Speed = SPEED_LEVEL2 + (SPEED_LEVEL3 - SPEED_LEVEL2) / (TEMPERATURE_90 - TEMPERATURE_80) * (TempNow - TEMPERATURE_80);
-        }
-        else if(TempNow > TEMPERATURE_90 && TempNow < TEMPERATURE_92)
-        {
-            Speed = SPEED_LEVEL4;
-        }
-        else
-        {
-            Speed = SPEED_LEVEL5;
-        }
-        
-        Emc2305_WriteByte(EMC2305_10K_ADDR, FAN1_SETTING, Speed);
-        Emc2305_WriteByte(EMC2305_10K_ADDR, FAN2_SETTING, Speed);
-        Emc2305_WriteByte(EMC2305_10K_ADDR, FAN3_SETTING, Speed);
-        Emc2305_WriteByte(EMC2305_10K_ADDR, FAN4_SETTING, Speed);
-        Emc2305_WriteByte(EMC2305_10K_ADDR, FAN5_SETTING, Speed);
     }
 }
+
+void Fan_DutyCycle_Set(uint8_t Duty)
+{
+    
+    
+    float Speed = Duty * (255.0 / 100.0);
+    
+    if(SysMsg.Fan.CntlMode == 1)
+    {
+        Emc2305_WriteByte(EMC2305_10K_ADDR, FAN1_SETTING, (uint8_t)Speed);
+        Emc2305_WriteByte(EMC2305_10K_ADDR, FAN2_SETTING, (uint8_t)Speed);
+        Emc2305_WriteByte(EMC2305_10K_ADDR, FAN3_SETTING, (uint8_t)Speed);
+        Emc2305_WriteByte(EMC2305_10K_ADDR, FAN4_SETTING, (uint8_t)Speed);
+        Emc2305_WriteByte(EMC2305_10K_ADDR, FAN5_SETTING, (uint8_t)Speed);
+    }
+}
+
 
 void Fan_Speed_Read()
 {
     uint16_t Rpm1, Rpm2, Rpm3, Rpm4, Rpm5;
+    uint8_t Duty1, Duty2, Duty3, Duty4, Duty5;
     uint8_t Tach1[2] = {0, 0}, Tach2[2] = {0, 0}, Tach3[2] = {0, 0}, Tach4[2] = {0, 0}, Tach5[2] = {0, 0};
+
+    Emc2305_ReadData(EMC2305_10K_ADDR, FAN1_SETTING, &Duty1, 1);
+    Emc2305_ReadData(EMC2305_10K_ADDR, FAN1_SETTING, &Duty2, 1);
+    Emc2305_ReadData(EMC2305_10K_ADDR, FAN1_SETTING, &Duty3, 1);
+    Emc2305_ReadData(EMC2305_10K_ADDR, FAN1_SETTING, &Duty4, 1);
+    Emc2305_ReadData(EMC2305_10K_ADDR, FAN1_SETTING, &Duty5, 1);
     
+    SysMsg.Fan.Duty1 = (uint8_t)((float)(Duty1 / 255.0) * 100);
+    SysMsg.Fan.Duty2 = (uint8_t)((float)(Duty2 / 255.0) * 100);
+    SysMsg.Fan.Duty3 = (uint8_t)((float)(Duty3 / 255.0) * 100);
+    SysMsg.Fan.Duty4 = (uint8_t)((float)(Duty4 / 255.0) * 100);
+    SysMsg.Fan.Duty5 = (uint8_t)((float)(Duty5 / 255.0) * 100);
+
     Emc2305_ReadData(EMC2305_10K_ADDR, FAN1_TACHREAD_HIGH, Tach1, 2);
     Emc2305_ReadData(EMC2305_10K_ADDR, FAN2_TACHREAD_HIGH, Tach2, 2);
     Emc2305_ReadData(EMC2305_10K_ADDR, FAN3_TACHREAD_HIGH, Tach3, 2);
@@ -333,7 +366,6 @@ void Fan_Speed_Read()
     SysMsg.Fan.Rpm4 = (Rpm4 > SPEED_ERROR) ? Rpm4 : 0;
     SysMsg.Fan.Rpm5 = (Rpm5 > SPEED_ERROR) ? Rpm5 : 0;
     
-    
     DEBUG_PRINTF(SysMsg.Fan.DebugMessage, "SysMsg.Fan.Rpm1 = %d \r\n", SysMsg.Fan.Rpm1);
     DEBUG_PRINTF(SysMsg.Fan.DebugMessage, "SysMsg.Fan.Rpm2 = %d \r\n", SysMsg.Fan.Rpm2);
     DEBUG_PRINTF(SysMsg.Fan.DebugMessage, "SysMsg.Fan.Rpm3 = %d \r\n", SysMsg.Fan.Rpm3);
@@ -345,6 +377,8 @@ void Fan_Emc2305_Init()
 {
     uint8_t temp;
     
+    Delay_ms(500);
+    
     Emc2305_WriteByte(EMC2305_10K_ADDR, BASIC_CTL, 0x80);                       //屏蔽中断  
     Emc2305_ReadByte(EMC2305_10K_ADDR, BASIC_CTL, &temp); 
 
@@ -352,7 +386,7 @@ void Fan_Emc2305_Init()
     Emc2305_WriteByte(EMC2305_10K_ADDR, PWM_OUTPUT,   0x1F);                    //设置PWM为推挽输出
     Emc2305_WriteByte(EMC2305_10K_ADDR, PWM45_BASE,   0x00);                    //设置PWM4、PWM5基础频率为26KHz
     Emc2305_WriteByte(EMC2305_10K_ADDR, PWM123_BASE,  0x00);                    //设置PWM1、PWM2、PWM3基础频率为26KHz
-    
+
     Emc2305_WriteByte(EMC2305_10K_ADDR, FAN1_SETTING, SPEED_IDLE);              //设置占空比
     Emc2305_WriteByte(EMC2305_10K_ADDR, FAN2_SETTING, SPEED_IDLE);
     Emc2305_WriteByte(EMC2305_10K_ADDR, FAN3_SETTING, SPEED_IDLE);

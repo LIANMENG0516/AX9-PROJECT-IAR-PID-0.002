@@ -76,20 +76,26 @@ void Adc3_GetAdjVoltage()
     SysMsg.AdjVol.R_VNN2 = (uint32_t)(((((3.3 - (Adc3_ReadConvertValue(SAMPLE_VNN2_SEQUENCE) * 3.3 / 4095)) / 2.67) * (2.67 + 100)) - 3.3) * 100);
 }
 
+void Adc3_GetExternalPowerSupplyVoltage()
+{
+    SysMsg.AdjVol.R_INPUT = (uint32_t)(((Adc3_ReadConvertValue(SAMPLE_INPUT_SEQUENCE) * 3.3 / 4095) / 4.99 * (4.99 + 52.3)) * 100);
+}
+
 void Adc3_GetFixVoltage()
-{      
-    SysMsg.AdjVol.R_A3V75 = (uint32_t)(((Adc3_ReadConvertValue(SAMPLE_A3V75_SEQUENCE) * 3.3 / 4095) / 15 * (15 + 24.9)) * 100);
-    SysMsg.AdjVol.R_A2V25 = (uint32_t)(((Adc3_ReadConvertValue(SAMPLE_A2V25_SEQUENCE) * 3.3 / 4095) / 15 * (15 + 24.9)) * 100);   
+{    
     SysMsg.AdjVol.R_AP12V = (uint32_t)(((Adc3_ReadConvertValue(SAMPLE_AP12V_SEQUENCE) * 3.3 / 4095) / 4.99 * (4.99 + 24.9)) * 100);   
     SysMsg.AdjVol.R_AN12V = (uint32_t)(((((3.3 - (Adc3_ReadConvertValue(SAMPLE_AN12V_SEQUENCE) * 3.3 / 4095)) / 4.99) * (4.99 + 110)) - 3.3) * 100);
     SysMsg.AdjVol.R_AP5V5_1 = (uint32_t)(((Adc3_ReadConvertValue(SAMPLE_AP5V5_1_SEQUENCE) * 3.3 / 4095) / 15 * (15 + 24.9)) * 100);
     SysMsg.AdjVol.R_AP5V5_2 = (uint32_t)(((Adc3_ReadConvertValue(SAMPLE_AP5V5_2_SEQUENCE) * 3.3 / 4095) / 15 * (15 + 24.9)) * 100);
     SysMsg.AdjVol.R_AN5V5 = (uint32_t)(((((3.3 - (Adc3_ReadConvertValue(SAMPLE_AN5V5_SEQUENCE) * 3.3 / 4095)) / 4.99) * (4.99 + 110)) - 3.3) * 100);
-
-    SysMsg.AdjVol.R_INPUT = (uint32_t)(((Adc3_ReadConvertValue(SAMPLE_INPUT_SEQUENCE) * 3.3 / 4095) / 4.99 * (4.99 + 52.3)) * 100);
-    SysMsg.AdjVol.R_D0V95 = (uint32_t)(((Adc3_ReadConvertValue(SAMPLE_D0V95_SEQUENCE) * 3.3 / 4095) / 10 * (10 + 10)) * 100);
+    SysMsg.AdjVol.R_A3V75 = (uint32_t)(((Adc3_ReadConvertValue(SAMPLE_A3V75_SEQUENCE) * 3.3 / 4095) / 15 * (15 + 24.9)) * 100);
+    SysMsg.AdjVol.R_A2V25 = (uint32_t)(((Adc3_ReadConvertValue(SAMPLE_A2V25_SEQUENCE) * 3.3 / 4095) / 15 * (15 + 24.9)) * 100);   
     SysMsg.AdjVol.R_D1V45 = (uint32_t)(((Adc3_ReadConvertValue(SAMPLE_D1V45_SEQUENCE) * 3.3 / 4095) / 10 * (10 + 10)) * 100);
+    SysMsg.AdjVol.R_D0V95 = (uint32_t)(((Adc3_ReadConvertValue(SAMPLE_D0V95_SEQUENCE) * 3.3 / 4095) / 10 * (10 + 10)) * 100);    
 }
+
+
+
 
 uint16_t  Adc_1_ConValue[ADC_SAMPLE_NUM][ADC1_CHANNEL_NUM];
 

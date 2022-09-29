@@ -25,6 +25,8 @@
 
 /* Includes ------------------------------------------------------------------ */
 #include "usbd_cdc_vcp.h"
+    
+#include "gouble.h"
 
 /* Private typedef ----------------------------------------------------------- */
 /* Private define ------------------------------------------------------------ */
@@ -100,7 +102,7 @@ static uint16_t VCP_DeInit(void)
   */
 static uint16_t VCP_Ctrl(uint32_t Cmd, uint8_t * Buf, uint32_t Len)
 {
-  return USBD_OK;
+    return USBD_OK;
 }
 
 /**
@@ -113,19 +115,19 @@ static uint16_t VCP_Ctrl(uint32_t Cmd, uint8_t * Buf, uint32_t Len)
   */
 static uint16_t VCP_DataTx(uint8_t *buf, uint32_t len)
 {
-	for(uint32_t i=0; i<len; i++)
-	{
-		APP_Rx_Buffer[APP_Rx_ptr_in] = *buf++;
+    for(uint32_t i=0; i<len; i++)
+    {
+        APP_Rx_Buffer[APP_Rx_ptr_in] = *buf++;
 
-		APP_Rx_ptr_in++;
+        APP_Rx_ptr_in++;
 
-		if(APP_Rx_ptr_in == APP_RX_DATA_SIZE)
-		{
-			APP_Rx_ptr_in = 0;
-		} 
-	}
+        if(APP_Rx_ptr_in == APP_RX_DATA_SIZE)
+        {
+            APP_Rx_ptr_in = 0;
+        } 
+    }
 
-	return USBD_OK;
+    return USBD_OK;
 }
 
 /**
@@ -143,10 +145,36 @@ static uint16_t VCP_DataTx(uint8_t *buf, uint32_t len)
   * @param  Len: Number of data received (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else VCP_FAIL
   */
-static uint16_t VCP_DataRx(uint8_t * Buf, uint32_t Len)
+
+uint8_t usbRxBuf[200];
+DataBufStruct UsbRxStruct = {usbRxBuf, 0, 0};
+
+extern __ALIGN_BEGIN uint8_t USB_Rx_Buffer[CDC_DATA_MAX_PACKET_SIZE] __ALIGN_END ;
+
+extern System_MsgStruct SysMsg;
+
+uint16_t TestCount = 0;
+
+static uint16_t VCP_DataRx(uint8_t * Buf, uint32_t RevLen)
 {	
-  receive_count = Len;
-  return USBD_OK;
+    if(UsbRxStruct.pBufIn + RevLen <= sizeof(usbRxBuf))
+    {
+        memcpy(&usbRxBuf[UsbRxStruct.pBufIn], USB_Rx_Buffer, RevLen);
+        UsbRxStruct.pBufIn += RevLen;
+    }
+    else
+    {
+        int SurplusLen = sizeof(usbRxBuf) - UsbRxStruct.pBufIn;
+        
+        memcpy(&usbRxBuf[UsbRxStruct.pBufIn], USB_Rx_Buffer, SurplusLen);
+        UsbRxStruct.pBufIn = 0;
+        memcpy(&usbRxBuf[UsbRxStruct.pBufIn], &USB_Rx_Buffer[SurplusLen], RevLen - SurplusLen);
+        UsbRxStruct.pBufIn += RevLen - SurplusLen;
+    }
+
+    receive_count = RevLen;
+
+    return USBD_OK;
 }
 
 /**

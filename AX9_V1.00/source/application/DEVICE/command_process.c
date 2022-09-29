@@ -16,23 +16,9 @@ uint8_t DateStr[11] = __DATE__;
 uint8_t TimeStr[8]  = __TIME__;
 
 uint8_t	RcvDataCmd[100];
-CmdFrameStr RcvFrameCmd = {0x68, 0x04, 0x00, 0x00, (uint8_t *)RcvDataCmd, 0x00, 0x16};
-
 uint8_t	SenDataCmd[100];
+CmdFrameStr RcvFrameCmd = {0x68, 0x04, 0x00, 0x00, (uint8_t *)RcvDataCmd, 0x00, 0x16};
 CmdFrameStr SenFrameCmd = {0x68, 0x04, 0x00, 0x00, (uint8_t *)SenDataCmd, 0x00, 0x16};
-
-uint8_t	RcvDataCmdEc[100];
-CmdFrameStr RcvFrameCmdEc = {0x68, 0x04, 0x00, 0x00, (uint8_t *)RcvDataCmdEc, 0x00, 0x16};
-
-uint8_t	SenDataCmdEc[100];
-CmdFrameStr SenFrameCmdEc = {0x68, 0x04, 0x00, 0x00, (uint8_t *)SenDataCmdEc, 0x00, 0x16};
-
-uint8_t	RcvDataCmdDebug [100];
-CmdFrameStr RcvFrameCmdDebug = {0x68, 0x04, 0x00, 0x00, (uint8_t *)RcvDataCmdDebug , 0x00, 0x16};
-
-uint8_t	SenDataCmdDebug [100];
-CmdFrameStr SenFrameCmdDebug  = {0x68, 0x04, 0x00, 0x00, (uint8_t *)SenDataCmdDebug , 0x00, 0x16};
-
 
 
 uint8_t Ec_Info[] = {
@@ -103,6 +89,188 @@ union VolCheck
     uint16_t volChk;
 };
 
+
+
+void Get_AdjHvMsg(uint8_t *buffer)
+{      
+    SysMsg.AdjVol.T_VPP1 = (buffer[0] << 8) | buffer[1];                                                    //获取目标电压
+    SysMsg.AdjVol.T_VNN1 = (buffer[2] << 8) | buffer[3];
+    SysMsg.AdjVol.T_VPP2 = (buffer[4] << 8) | buffer[5];
+    SysMsg.AdjVol.T_VNN2 = (buffer[6] << 8) | buffer[7];
+    
+    if(SysMsg.AdjVol.T_VPP1 <= HIGHSET_HV1 && SysMsg.AdjVol.T_VPP1 >= LOOWSET_HV1 &&                        //在允许调压范围之内且HV1>=HV2
+       SysMsg.AdjVol.T_VNN1 <= HIGHSET_HV1 && SysMsg.AdjVol.T_VNN1 >= LOOWSET_HV1 && 
+       SysMsg.AdjVol.T_VPP2 <= HIGHSET_HV2 && SysMsg.AdjVol.T_VPP2 >= LOOWSET_HV2 && 
+       SysMsg.AdjVol.T_VNN2 <= HIGHSET_HV2 && SysMsg.AdjVol.T_VNN2 >= LOOWSET_HV2 &&
+       SysMsg.AdjVol.T_VPP1 >= SysMsg.AdjVol.T_VPP2 && 
+       SysMsg.AdjVol.T_VNN1 >= SysMsg.AdjVol.T_VNN2 )
+    {
+        Adc3_GetAdjVoltage();
+      
+        if((SysMsg.AdjVol.T_VPP1 != SysMsg.AdjVol.Old_T_VPP1 && SysMsg.AdjVol.T_VNN1 != SysMsg.AdjVol.Old_T_VNN1) || 
+           (abs(SysMsg.AdjVol.T_VPP1 - SysMsg.AdjVol.R_VPP1) < 50) || (abs(SysMsg.AdjVol.T_VNN1 - SysMsg.AdjVol.R_VNN1) < 50))
+        {
+            //计算目标电压允许输出范围
+            Calc_TarVolHv1_AlowRange(); 
+            
+            //计算最终要调节到的DAC值
+            SysMsg.AdjVol.T_McuDacHv1 = Vpp_Calculate_AdjVol(SysMsg.AdjVol.T_VPP1);                                           
+            SysMsg.AdjVol.T_SpiDacHv1 = Vnn_Calculate_AdjVol(SysMsg.AdjVol.T_VNN1);
+            
+            //判断是升压还是降压从而确定超时时间
+            if((SysMsg.AdjVol.T_VPP1 > SysMsg.AdjVol.Old_T_VPP1 && SysMsg.AdjVol.T_VNN1 > SysMsg.AdjVol.Old_T_VNN1))
+            {          
+                SysMsg.AdjVol.Hv1TimeOut = HV_CHANGE_UP_TIMEOUT;                                                                   
+            }
+            else
+            {
+                SysMsg.AdjVol.Hv1TimeOut = HV_CHANGE_DOWN_TIMEOUT;                                                                 
+            }
+
+            SysMsg.AdjVol.Old_T_VPP1 = SysMsg.AdjVol.T_VPP1;    
+            SysMsg.AdjVol.Old_T_VNN1 = SysMsg.AdjVol.T_VNN1;
+            
+            SysMsg.AdjVol.Hv1MinitorOpen = FALSE;
+            SysMsg.AdjVol.RoughAdjVolHv1Open = TRUE;
+            SysMsg.AdjVol.WaitRoughAdjVolResultHv1Open = FALSE;
+            SysMsg.AdjVol.FineAdjVolHv1Open = FALSE;
+            SysMsg.AdjVol.Hv1AdjVolCompleteFlag = BUSY;
+        }
+      
+        if((SysMsg.AdjVol.T_VPP2 != SysMsg.AdjVol.Old_T_VPP2 && SysMsg.AdjVol.T_VNN2 != SysMsg.AdjVol.Old_T_VNN2) || 
+           (abs(SysMsg.AdjVol.T_VPP2 - SysMsg.AdjVol.R_VPP2) < 50) || (abs(SysMsg.AdjVol.T_VNN2 - SysMsg.AdjVol.R_VNN2) < 50))
+        {
+            //计算目标电压允许输出范围
+            Calc_TarVolHv2_AlowRange(); 
+          
+            //计算最终要调节到的DAC值
+            SysMsg.AdjVol.T_McuDacHv2 = Vpp_Calculate_AdjVol(SysMsg.AdjVol.T_VPP2);                                           
+            SysMsg.AdjVol.T_SpiDacHv2 = Vnn_Calculate_AdjVol(SysMsg.AdjVol.T_VNN2);
+          
+            //判断是升压还是降压从而确定超时时间
+            if((SysMsg.AdjVol.T_VPP2 > SysMsg.AdjVol.Old_T_VPP2 && SysMsg.AdjVol.T_VNN2 > SysMsg.AdjVol.Old_T_VNN2))
+            {          
+                SysMsg.AdjVol.Hv2TimeOut = HV_CHANGE_UP_TIMEOUT;                                                                   
+            }
+            else
+            {
+                SysMsg.AdjVol.Hv2TimeOut = HV_CHANGE_DOWN_TIMEOUT;                                                                 
+            }
+          
+            SysMsg.AdjVol.Old_T_VPP2 = SysMsg.AdjVol.T_VPP2;    
+            SysMsg.AdjVol.Old_T_VNN2 = SysMsg.AdjVol.T_VNN2; 
+          
+            SysMsg.AdjVol.CwMinitorOpen = FALSE;
+            SysMsg.AdjVol.RoughAdjVolCwOpen = FALSE;
+            SysMsg.AdjVol.FineAdjVolCwOpen = FALSE;
+            SysMsg.AdjVol.WaitRoughAdjVolResultCwOpen  = FALSE; 
+            SysMsg.AdjVol.CwAdjVolCompleteFlag = BUSY;
+            
+            SysMsg.AdjVol.Hv2MinitorOpen = FALSE;
+            SysMsg.AdjVol.RoughAdjVolHv2Open = TRUE;
+            SysMsg.AdjVol.WaitRoughAdjVolResultHv2Open = FALSE;
+            SysMsg.AdjVol.FineAdjVolHv2Open = FALSE;
+            SysMsg.AdjVol.Hv2AdjVolCompleteFlag = BUSY;
+        }
+    }
+    else
+    {
+        UploadErrorCode1();                                                     //上传错误码
+        Adjust_Voltage_Close();                                                 //关闭高压
+    }  
+}
+
+void Cmd_AdjustVoltageHv()
+{
+    Get_AdjHvMsg(RcvFrameCmd.Data);
+}
+
+void Get_AdjCwMsg(uint8_t *buffer)
+{
+    SysMsg.AdjVol.T_VPP1 = (buffer[0] << 8) | buffer[1];                                                    //获取目标电压
+    SysMsg.AdjVol.T_VNN1 = (buffer[2] << 8) | buffer[3];
+    SysMsg.AdjVol.T_PCW  = (buffer[4] << 8) | buffer[5];
+    SysMsg.AdjVol.T_NCW  = (buffer[6] << 8) | buffer[7];
+    
+    if(SysMsg.AdjVol.T_VPP1 <= HIGHSET_HV1 && SysMsg.AdjVol.T_VPP1 >= LOOWSET_HV1 &&                        //在允许调压范围之内且HV1>=HV2
+       SysMsg.AdjVol.T_VNN1 <= HIGHSET_HV1 && SysMsg.AdjVol.T_VNN1 >= LOOWSET_HV1 && 
+       SysMsg.AdjVol.T_PCW  <= HIGHSET_CW  && SysMsg.AdjVol.T_PCW  >= LOOWSET_CW  && 
+       SysMsg.AdjVol.T_NCW  <= HIGHSET_CW  && SysMsg.AdjVol.T_NCW  >= LOOWSET_CW  )
+    {
+        Adc3_GetAdjVoltage();
+        
+        if((SysMsg.AdjVol.T_VPP1 != SysMsg.AdjVol.Old_T_VPP1 && SysMsg.AdjVol.T_VNN1 != SysMsg.AdjVol.Old_T_VNN1) || 
+           (abs(SysMsg.AdjVol.T_VPP1 - SysMsg.AdjVol.R_VPP1) < 50) || (abs(SysMsg.AdjVol.T_VNN1 - SysMsg.AdjVol.R_VNN1) < 50))
+        {
+            //计算目标电压允许输出范围
+            Calc_TarVolHv1_AlowRange(); 
+            
+            //计算最终要调节到的DAC值
+            SysMsg.AdjVol.T_McuDacHv1 = Vpp_Calculate_AdjVol(SysMsg.AdjVol.T_VPP1);                                           
+            SysMsg.AdjVol.T_SpiDacHv1 = Vnn_Calculate_AdjVol(SysMsg.AdjVol.T_VNN1);
+            
+            //判断是升压还是降压从而确定超时时间
+            if((SysMsg.AdjVol.T_VPP1 > SysMsg.AdjVol.Old_T_VPP1 && SysMsg.AdjVol.T_VNN1 > SysMsg.AdjVol.Old_T_VNN1))
+            {          
+                SysMsg.AdjVol.Hv1TimeOut = HV_CHANGE_UP_TIMEOUT;                                                                   
+            }
+            else
+            {
+                SysMsg.AdjVol.Hv1TimeOut = HV_CHANGE_DOWN_TIMEOUT;                                                                 
+            }
+
+            SysMsg.AdjVol.Old_T_VPP1 = SysMsg.AdjVol.T_VPP1;    
+            SysMsg.AdjVol.Old_T_VNN1 = SysMsg.AdjVol.T_VNN1;
+            
+            SysMsg.AdjVol.Hv1MinitorOpen = FALSE;
+            SysMsg.AdjVol.RoughAdjVolHv1Open = TRUE;
+            SysMsg.AdjVol.WaitRoughAdjVolResultHv1Open = FALSE;
+            SysMsg.AdjVol.FineAdjVolHv1Open = FALSE;
+            SysMsg.AdjVol.Hv1AdjVolCompleteFlag = BUSY;
+        }
+
+        if((SysMsg.AdjVol.T_PCW != SysMsg.AdjVol.Old_T_PCW && SysMsg.AdjVol.T_NCW != SysMsg.AdjVol.Old_T_NCW) || 
+           (abs(SysMsg.AdjVol.T_PCW - SysMsg.AdjVol.R_VPP2) < 50) || (abs(SysMsg.AdjVol.T_NCW - SysMsg.AdjVol.R_VNN2) < 50))
+        {
+            //计算目标电压允许输出范围
+            Calc_TarVolCw_AlowRange(); 
+
+            //计算最终要调节到的DAC值
+            SysMsg.AdjVol.T_SpiDacPcw = Pcw_Calculate_AdjVol(SysMsg.AdjVol.T_PCW);                                           
+            SysMsg.AdjVol.T_SpiDacNcw = Ncw_Calculate_AdjVol(SysMsg.AdjVol.T_NCW);
+
+            //CW超时时间, 不用区分升降压, 直接赋值
+            SysMsg.AdjVol.CwTimeOut = CW_CHANGE_TIMEOUT;
+            
+            SysMsg.AdjVol.Old_T_PCW = SysMsg.AdjVol.T_PCW;    
+            SysMsg.AdjVol.Old_T_NCW = SysMsg.AdjVol.T_NCW;
+            
+            SysMsg.AdjVol.Hv2MinitorOpen = FALSE;
+            SysMsg.AdjVol.RoughAdjVolHv2Open = FALSE;
+            SysMsg.AdjVol.WaitRoughAdjVolResultHv2Open = FALSE;
+            SysMsg.AdjVol.FineAdjVolHv2Open = FALSE;
+            SysMsg.AdjVol.Hv2AdjVolCompleteFlag = BUSY;
+            
+            SysMsg.AdjVol.CwMinitorOpen = FALSE;
+            SysMsg.AdjVol.RoughAdjVolCwOpen = TRUE;
+            SysMsg.AdjVol.FineAdjVolCwOpen = FALSE;
+            SysMsg.AdjVol.WaitRoughAdjVolResultCwOpen  = FALSE; 
+            SysMsg.AdjVol.CwAdjVolCompleteFlag = BUSY;
+        }
+    }
+    else
+    {
+        UploadErrorCode1();                                                     //上传错误码
+        Adjust_Voltage_Close();                                                 //关闭高压
+    }  
+}
+
+void Cmd_AdjustVoltageCw()
+{
+    Get_AdjCwMsg(RcvFrameCmd.Data);
+}
+
+
 void Update_EcInfo()
 {
     union VolCheck VolChk;
@@ -164,10 +332,8 @@ void Cmd_EcInfo()
     
     if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
     {
-        #if DEBUG_COMMAND
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
     }
 }
 
@@ -207,40 +373,61 @@ void Cmd_ReadFirmWareVersion()
         
         if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
         {
-            #if DEBUG_COMMAND
             FrameCmdPackage(DebugComTX.Data);
             Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-            #endif
         }
     } 
 }
 
 void Cmd_ReadCompileInfo()
 {
-    SenFrameCmd.Cid = CMD_COMPILE_INFO;
-    SenFrameCmd.Len = sizeof(DateStr) + sizeof(TimeStr);
+  
+    if(RcvFrameCmd.Data[0] == 0x1C)                                             //兼容LX9 Super的固件升级返回的命令
+    {
+        USB_Tx_Buffer[0] = SenFrameCmd.Header   = 0x68;
+        USB_Tx_Buffer[1] = SenFrameCmd.Id       = 0x04;
+        USB_Tx_Buffer[2] = SenFrameCmd.Cid      = 0x05;
+        USB_Tx_Buffer[3] = SenFrameCmd.Len      = 0x15;
+        USB_Tx_Buffer[4] = SenFrameCmd.Data[0]  = 0x1C;
+        
+        memcpy(&SenFrameCmd.Data[1], DateStr, 11);
+        memcpy(&SenFrameCmd.Data[12], TimeStr, 8); 
+        memcpy(&USB_Tx_Buffer[5], &SenFrameCmd.Data[1], 19); 
+        
+        SenFrameCmd.Chk = SenFrameCmd.Id + SenFrameCmd.Cid + SenFrameCmd.Len;
+        for(int i=0; i<SenFrameCmd.Len-1; i++)
+        {
+            SenFrameCmd.Chk += SenFrameCmd.Data[i];
+        }
+        
+        USB_Tx_Buffer[25] = SenFrameCmd.Chk;
+        USB_Tx_Buffer[26] = SenFrameCmd.Tail    = 0x16;
 
-    memcpy(&SenFrameCmd.Data[0], DateStr, 11);
-    memcpy(&SenFrameCmd.Data[11], TimeStr, 8);
-    
-    if(SysMsg.Cmd.Channel == ECCOM_CHANNEL)
-    {
-        FrameCmdPackage(CommuComTX.Data);
-        Send_CmdPackage(COMMU_COM_DMAY_STREAMX_TX);
+        VCP_fops.pIf_DataTx(USB_Tx_Buffer, SenFrameCmd.Len+5);
     }
-    
-    if(SysMsg.Cmd.Channel == USB_CHANNEL)
+    else
     {
-        FrameCmdPackage(USB_Tx_Buffer);
-        VCP_fops.pIf_DataTx(USB_Tx_Buffer, (USB_Tx_Buffer[3] + 6));
-    }
-    
-    if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
-    {
-        #if DEBUG_COMMAND
-        FrameCmdPackage(DebugComTX.Data);
-        Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
+        SenFrameCmd.Cid = CMD_COMPILE_INFO;
+        SenFrameCmd.Len = sizeof(DateStr) + sizeof(TimeStr);
+
+        memcpy(&SenFrameCmd.Data[0], DateStr, 11);
+        memcpy(&SenFrameCmd.Data[11], TimeStr, 8);
+
+        if(SysMsg.Cmd.Channel == ECCOM_CHANNEL)
+        {
+            FrameCmdPackage(CommuComTX.Data);
+            Send_CmdPackage(COMMU_COM_DMAY_STREAMX_TX);
+        }
+        if(SysMsg.Cmd.Channel == USB_CHANNEL)
+        {
+            FrameCmdPackage(USB_Tx_Buffer);
+            VCP_fops.pIf_DataTx(USB_Tx_Buffer, (USB_Tx_Buffer[3] + 6));
+        }
+        if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
+        {
+            FrameCmdPackage(DebugComTX.Data);
+            Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
+        }
     }
 }
 
@@ -270,10 +457,8 @@ void Cmd_ReadHardWareVersion()
     
     if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
     {
-        #if DEBUG_COMMAND
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
     }
 
 }
@@ -310,10 +495,8 @@ void Cmd_WriteHardWareVersion()
     
     if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
     {
-        #if DEBUG_COMMAND
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
     }
 }
 
@@ -338,10 +521,8 @@ void Cmd_SleepEn()
     
     if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
     {
-        #if DEBUG_COMMAND
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
     }
 }
 
@@ -365,10 +546,8 @@ void Cmd_WeakUp()
     
     if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
     {
-        #if DEBUG_COMMAND
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
     }
 }
 
@@ -392,10 +571,8 @@ void Cmd_Restart()
     
     if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
     {
-        #if DEBUG_COMMAND
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
     }
 }
 
@@ -437,10 +614,8 @@ void Cmd_Upgrade()
         
         if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
         {
-            #if DEBUG_COMMAND
             FrameCmdPackage(DebugComTX.Data);
             Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-            #endif
         }
     }
 
@@ -479,17 +654,16 @@ void Cmd_ReadPowerInfo()
     
     if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
     {
-        #if DEBUG_COMMAND
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
     }
 }
 
 void Cmd_ReadFanInfo()
-{
+{  
     SenFrameCmd.Cid = CMD_FAN_INFO;
-    SenFrameCmd.Len = 10;
+    SenFrameCmd.Len = 15;
+
     SenFrameCmd.Data[0] = SysMsg.Fan.Rpm1 >> 8;
     SenFrameCmd.Data[1] = SysMsg.Fan.Rpm1;
     SenFrameCmd.Data[2] = SysMsg.Fan.Rpm2 >> 8;
@@ -500,6 +674,12 @@ void Cmd_ReadFanInfo()
     SenFrameCmd.Data[7] = SysMsg.Fan.Rpm4;
     SenFrameCmd.Data[8] = SysMsg.Fan.Rpm5 >> 8;
     SenFrameCmd.Data[9] = SysMsg.Fan.Rpm5;
+    
+    SenFrameCmd.Data[10] = SysMsg.Fan.Duty1;
+    SenFrameCmd.Data[11] = SysMsg.Fan.Duty2;
+    SenFrameCmd.Data[12] = SysMsg.Fan.Duty3;
+    SenFrameCmd.Data[13] = SysMsg.Fan.Duty4;
+    SenFrameCmd.Data[14] = SysMsg.Fan.Duty5;
     
     if(SysMsg.Cmd.Channel == ECCOM_CHANNEL)
     {
@@ -515,10 +695,8 @@ void Cmd_ReadFanInfo()
     
     if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
     {
-        #if DEBUG_COMMAND
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
     }
 }
         
@@ -549,10 +727,8 @@ void Cmd_ReadTempeatureInfo()
     
     if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
     {
-        #if DEBUG_COMMAND
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
     }
 }
 
@@ -580,10 +756,8 @@ void Cmd_WriteTempeatureInfo()
     
     if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
     {
-        #if DEBUG_COMMAND
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
     }
 }
 
@@ -618,10 +792,8 @@ void Cmd_ReadStaticVoltage()
     
     if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
     {
-        #if DEBUG_COMMAND
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
     }
 }
 
@@ -629,17 +801,62 @@ void Cmd_ReadAdjustVoltage()
 {
     Adc3_GetAdjVoltage();
   
-    SenFrameCmd.Cid = CMD_RDADJUST_VOLTAGE;
-    SenFrameCmd.Len = 8;   
-    SenFrameCmd.Data[0] = SysMsg.AdjVol.R_VPP1 >> 8;
-    SenFrameCmd.Data[1] = SysMsg.AdjVol.R_VPP1;
-    SenFrameCmd.Data[2] = SysMsg.AdjVol.R_VNN1 >> 8;
-    SenFrameCmd.Data[3] = SysMsg.AdjVol.R_VNN1;
-    SenFrameCmd.Data[4] = SysMsg.AdjVol.R_VPP2 >> 8;
-    SenFrameCmd.Data[5] = SysMsg.AdjVol.R_VPP2;
-    SenFrameCmd.Data[6] = SysMsg.AdjVol.R_VNN2 >> 8;
-    SenFrameCmd.Data[7] = SysMsg.AdjVol.R_VNN2;
-
+    if(SysMsg.AdjVol.HvFlag == TRUE)
+    {
+        SenFrameCmd.Cid = CMD_RDADJUST_VOLTAGE;
+        SenFrameCmd.Len = 18;   
+        SenFrameCmd.Data[0] = SysMsg.AdjVol.R_VPP1 >> 8;
+        SenFrameCmd.Data[1] = SysMsg.AdjVol.R_VPP1;
+        SenFrameCmd.Data[2] = SysMsg.AdjVol.R_VNN1 >> 8;
+        SenFrameCmd.Data[3] = SysMsg.AdjVol.R_VNN1;
+        
+        SenFrameCmd.Data[4] = SysMsg.AdjVol.R_VPP2 >> 8;
+        SenFrameCmd.Data[5] = SysMsg.AdjVol.R_VPP2;
+        SenFrameCmd.Data[6] = SysMsg.AdjVol.R_VNN2 >> 8;
+        SenFrameCmd.Data[7] = SysMsg.AdjVol.R_VNN2;
+        
+        SenFrameCmd.Data[8] = SysMsg.AdjVol.T_VPP1 >> 8;
+        SenFrameCmd.Data[9] = SysMsg.AdjVol.T_VPP1;
+        SenFrameCmd.Data[10] = SysMsg.AdjVol.T_VNN1 >> 8;
+        SenFrameCmd.Data[11] = SysMsg.AdjVol.T_VNN1;
+        
+        SenFrameCmd.Data[12] = SysMsg.AdjVol.T_VPP2 >> 8;
+        SenFrameCmd.Data[13] = SysMsg.AdjVol.T_VPP2;
+        SenFrameCmd.Data[14] = SysMsg.AdjVol.T_VNN2 >> 8;
+        SenFrameCmd.Data[15] = SysMsg.AdjVol.T_VNN2;
+        
+        SenFrameCmd.Data[16] = SysMsg.AdjVol.Hv1AdjVolCompleteFlag;
+        SenFrameCmd.Data[17] = SysMsg.AdjVol.Hv2AdjVolCompleteFlag;
+    }
+    
+    if(SysMsg.AdjVol.CwFlag == TRUE)
+    {
+        SenFrameCmd.Cid = CMD_RDADJUST_VOLTAGE;
+        SenFrameCmd.Len = 18;   
+        SenFrameCmd.Data[0] = SysMsg.AdjVol.R_VPP1 >> 8;
+        SenFrameCmd.Data[1] = SysMsg.AdjVol.R_VPP1;
+        SenFrameCmd.Data[2] = SysMsg.AdjVol.R_VNN1 >> 8;
+        SenFrameCmd.Data[3] = SysMsg.AdjVol.R_VNN1;
+        
+        SenFrameCmd.Data[4] = SysMsg.AdjVol.R_VPP2 >> 8;
+        SenFrameCmd.Data[5] = SysMsg.AdjVol.R_VPP2;
+        SenFrameCmd.Data[6] = SysMsg.AdjVol.R_VNN2 >> 8;
+        SenFrameCmd.Data[7] = SysMsg.AdjVol.R_VNN2;
+        
+        SenFrameCmd.Data[8] = SysMsg.AdjVol.T_VPP1 >> 8;
+        SenFrameCmd.Data[9] = SysMsg.AdjVol.T_VPP1;
+        SenFrameCmd.Data[10] = SysMsg.AdjVol.T_VNN1 >> 8;
+        SenFrameCmd.Data[11] = SysMsg.AdjVol.T_VNN1;
+        
+        SenFrameCmd.Data[12] = SysMsg.AdjVol.T_PCW >> 8;
+        SenFrameCmd.Data[13] = SysMsg.AdjVol.T_NCW;
+        SenFrameCmd.Data[14] = SysMsg.AdjVol.T_PCW >> 8;
+        SenFrameCmd.Data[15] = SysMsg.AdjVol.T_NCW;
+        
+        SenFrameCmd.Data[16] = SysMsg.AdjVol.Hv1AdjVolCompleteFlag;
+        SenFrameCmd.Data[17] = SysMsg.AdjVol.CwAdjVolCompleteFlag;
+    }
+   
     if(SysMsg.Cmd.Channel == USB_CHANNEL)
     {
         FrameCmdPackage(USB_Tx_Buffer);
@@ -654,13 +871,11 @@ void Cmd_ReadAdjustVoltage()
     
     if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
     {
-        #if DEBUG_COMMAND
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
-    }   
+    }       
     
-    DEBUG_PRINTF(DEBUG_STRING, "Get Send Voltage : %d %d %d %d \r\n", SysMsg.AdjVol.R_VPP1, SysMsg.AdjVol.R_VNN1, SysMsg.AdjVol.R_VPP2, SysMsg.AdjVol.R_VNN2);
+    //DEBUG_PRINTF(1, "SysMsg.AdjVol.TestTime = %d \r\n", SysMsg.AdjVol.TestTime);
 }
 
 void Cmd_Vpp1Vnn1EnableRes()
@@ -685,10 +900,8 @@ void Cmd_Vpp1Vnn1EnableRes()
     
     if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
     {
-        #if DEBUG_COMMAND
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
     }
 }
 
@@ -714,10 +927,8 @@ void Cmd_Vpp1Vnn1DisableRes()
     
     if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
     {
-        #if DEBUG_COMMAND
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
     }
 }
 
@@ -743,10 +954,8 @@ void Cmd_Vpp2Vnn2EnableRes()
     
     if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
     {
-        #if DEBUG_COMMAND
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
     }
 }
 
@@ -772,34 +981,29 @@ void Cmd_Vpp2Vnn2DisableRes()
     
     if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
     {
-        #if DEBUG_COMMAND
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
     }
 }
 
-void Cmd_AdjustVoltageHv()
+void Cmd_FanControl()
 {
-#if PID_CTRL
-    SysMsg.AdjVol.PidOpen = TRUE;
-    Pid_AdjVolHv(RcvFrameCmd.Data);
-#else
-    Get_AdjHvMsg(RcvFrameCmd.Data);
-#endif
-}
-
-void Cmd_AdjustVoltageCw()
-{
-    Get_AdjCwMsg(RcvFrameCmd.Data);
-}
-
-void Cmd_InValidData()
-{
-    SenFrameCmd.Cid = CMD_INVALID;
+    SysMsg.Fan.CntlMode = 1;
+  
+    if(RcvFrameCmd.Data[0] <= 0x64)
+    {
+        Fan_DutyCycle_Set(RcvFrameCmd.Data[0]);
+        SenFrameCmd.Data[0] = RESPONSE_OK;
+    }
+    else
+    {
+        SenFrameCmd.Data[0] = RESPONSE_FAIL;
+    }
+    
+    SenFrameCmd.Cid = CMD_FAN_DUTY_SET;
     SenFrameCmd.Len = 1;
-    SenFrameCmd.Data[0] = CMD_INVALID;
-        
+    
+            
     if(SysMsg.Cmd.Channel == ECCOM_CHANNEL)
     {
         FrameCmdPackage(CommuComTX.Data);
@@ -814,12 +1018,141 @@ void Cmd_InValidData()
     
     if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
     {
-        #if DEBUG_COMMAND
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
-        #endif
     }
 }
+
+void Cmd_InValidData()
+{
+    UploadErrorCode0();
+}
+
+
+void UploadErrorCode0()
+{
+    SenFrameCmd.Cid = CMD_INVALID;
+    SenFrameCmd.Len = 1;
+    SenFrameCmd.Data[0] = ERROR_CODE0;
+    
+    if(SysMsg.Cmd.Channel == ECCOM_CHANNEL)
+    {
+        FrameCmdPackage(CommuComTX.Data);
+        Send_CmdPackage(COMMU_COM_DMAY_STREAMX_TX);
+    }
+    if(SysMsg.Cmd.Channel == USB_CHANNEL)
+    {
+        FrameCmdPackage(USB_Tx_Buffer);
+        VCP_fops.pIf_DataTx(USB_Tx_Buffer, (USB_Tx_Buffer[3] + 6));
+    }
+    if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
+    {
+        FrameCmdPackage(DebugComTX.Data);
+        Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
+    }
+}
+
+void UploadErrorCode1()
+{
+    SenFrameCmd.Cid = CMD_INVALID;
+    SenFrameCmd.Len = 1;
+    SenFrameCmd.Data[0] = ERROR_CODE1;
+    
+    if(SysMsg.Cmd.Channel == ECCOM_CHANNEL)
+    {
+        FrameCmdPackage(CommuComTX.Data);
+        Send_CmdPackage(COMMU_COM_DMAY_STREAMX_TX);
+    }
+    if(SysMsg.Cmd.Channel == USB_CHANNEL)
+    {
+        FrameCmdPackage(USB_Tx_Buffer);
+        VCP_fops.pIf_DataTx(USB_Tx_Buffer, (USB_Tx_Buffer[3] + 6));
+    }
+    if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
+    {
+        FrameCmdPackage(DebugComTX.Data);
+        Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
+    }
+}
+
+void UploadErrorCode2()
+{
+    SenFrameCmd.Cid = CMD_INVALID;
+    SenFrameCmd.Len = 1;
+    SenFrameCmd.Data[0] = ERROR_CODE2;
+    
+    if(SysMsg.Cmd.Channel == ECCOM_CHANNEL)
+    {
+        FrameCmdPackage(CommuComTX.Data);
+        Send_CmdPackage(COMMU_COM_DMAY_STREAMX_TX);
+    }
+    if(SysMsg.Cmd.Channel == USB_CHANNEL)
+    {
+        FrameCmdPackage(USB_Tx_Buffer);
+        VCP_fops.pIf_DataTx(USB_Tx_Buffer, (USB_Tx_Buffer[3] + 6));
+    }
+    if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
+    {
+        FrameCmdPackage(DebugComTX.Data);
+        Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
+    }
+}
+
+void UploadErrorCode3()
+{
+    SenFrameCmd.Cid = CMD_INVALID;
+    SenFrameCmd.Len = 1;
+    SenFrameCmd.Data[0] = ERROR_CODE3;
+    
+    if(SysMsg.Cmd.Channel == ECCOM_CHANNEL)
+    {
+        FrameCmdPackage(CommuComTX.Data);
+        Send_CmdPackage(COMMU_COM_DMAY_STREAMX_TX);
+    }
+    if(SysMsg.Cmd.Channel == USB_CHANNEL)
+    {
+        FrameCmdPackage(USB_Tx_Buffer);
+        VCP_fops.pIf_DataTx(USB_Tx_Buffer, (USB_Tx_Buffer[3] + 6));
+    }
+    if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
+    {
+        FrameCmdPackage(DebugComTX.Data);
+        Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
+    }
+}
+
+void UploadErrorCode4()
+{
+    SenFrameCmd.Cid = CMD_INVALID;
+    SenFrameCmd.Len = 1;
+    SenFrameCmd.Data[0] = ERROR_CODE4;
+    
+    if(SysMsg.Cmd.Channel == ECCOM_CHANNEL)
+    {
+        FrameCmdPackage(CommuComTX.Data);
+        Send_CmdPackage(COMMU_COM_DMAY_STREAMX_TX);
+    }
+    if(SysMsg.Cmd.Channel == USB_CHANNEL)
+    {
+        FrameCmdPackage(USB_Tx_Buffer);
+        VCP_fops.pIf_DataTx(USB_Tx_Buffer, (USB_Tx_Buffer[3] + 6));
+    }
+    if(SysMsg.Cmd.Channel == DEBUGCOM_CHANNEL)
+    {
+        FrameCmdPackage(DebugComTX.Data);
+        Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
+    }
+}
+
+
+
+
+
+
+
+
+
+
 
 void Cmd_DebugMessageWwitch()
 {
@@ -827,12 +1160,12 @@ void Cmd_DebugMessageWwitch()
     else                                SysMsg.AdjVol.DebugMessage = FALSE;
     if(RcvFrameCmd.Data[0] & 0x02)      SysMsg.PwrInfo.DebugMessage = TRUE;
     else                                SysMsg.PwrInfo.DebugMessage = FALSE;
-    if(RcvFrameCmd.Data[0] & 0x04)      SysMsg.Temperature.DebugMessage = TRUE; 
-    else                                SysMsg.Temperature.DebugMessage = FALSE;
-    if(RcvFrameCmd.Data[0] & 0x08)      SysMsg.Fan.DebugMessage = TRUE;
+    if(RcvFrameCmd.Data[0] & 0x04)      SysMsg.Fan.DebugMessage = TRUE; 
     else                                SysMsg.Fan.DebugMessage = FALSE;
-    if(RcvFrameCmd.Data[0] & 0x10)      SysMsg.Cmd.DebugMessage = TRUE;
+    if(RcvFrameCmd.Data[0] & 0x08)      SysMsg.Cmd.DebugMessage = TRUE;
     else                                SysMsg.Cmd.DebugMessage = FALSE;
+    if(RcvFrameCmd.Data[0] & 0x10)      SysMsg.DebugMessage = TRUE;
+    else                                SysMsg.DebugMessage = FALSE;
     if(RcvFrameCmd.Data[0] & 0x20)      SysMsg.DebugMessage = TRUE;
     else                                SysMsg.DebugMessage = FALSE;
 }
@@ -846,7 +1179,7 @@ void FrameCmdPackage(uint8_t *pBuf)	//数据打包
     
     for(i=0; i<SenFrameCmd.Len; i++)
     {
-            SenFrameCmd.Chk += SenFrameCmd.Data[i];
+        SenFrameCmd.Chk += SenFrameCmd.Data[i];
     }
 
     pBuf[0] = SenFrameCmd.Header;
@@ -855,7 +1188,7 @@ void FrameCmdPackage(uint8_t *pBuf)	//数据打包
     pBuf[3] = SenFrameCmd.Len;
     for(int i=0; i<SenFrameCmd.Len; i++)
     {
-            pBuf[4 + i] = SenFrameCmd.Data[i];
+        pBuf[4 + i] = SenFrameCmd.Data[i];
     }
 
     pBuf[SenFrameCmd.Len + 6 - 2] = SenFrameCmd.Chk;
@@ -868,67 +1201,120 @@ void Send_CmdPackage(DMA_Stream_TypeDef* DMAy_Streamx)	//发送已经打包好的命令
     DMA_Cmd(DMAy_Streamx, ENABLE);
 }
 
-ErrorStatus ReceiveFrameAnalysis(uint8_t *pData, uint8_t DataLen)
+
+static enum 
 {
-    uint8_t CmdCrc = 0;
+    MSG_RX_STX,
+    MSG_RX_MODULE_ID,
+    MSG_RX_CID,
+    MSG_RX_DATA_SIZE,
+    MSG_RX_DATA,
+    MSG_RX_CHKSUM,
+    MSG_RX_ETX,
+    
+}FrameStep;
 
-    RcvFrameCmd.Header 		= 	*pData++;
-    RcvFrameCmd.Id 		= 	*pData++;
-    RcvFrameCmd.Cid 		= 	*pData++;
-    RcvFrameCmd.Len 		= 	*pData++;
-    for(int i=0; i<(DataLen-6); i++)
-    {
-        RcvFrameCmd.Data[i] = 	*pData++;
-    }
-    RcvFrameCmd.Chk 		= 	*pData++;
-    RcvFrameCmd.Tail 		= 	*pData;
-    
-    CmdCrc += RcvFrameCmd.Id;
-    CmdCrc += RcvFrameCmd.Cid;
-    CmdCrc += RcvFrameCmd.Len;
-    
-    for(int i=0; i<RcvFrameCmd.Len; i++)
-    {
-        CmdCrc += RcvFrameCmd.Data[i];
-    }
-    
-    if(RcvFrameCmd.Header == 0x68 && RcvFrameCmd.Id == 0x04 && RcvFrameCmd.Cid == 0x03 && RcvFrameCmd.Len == 0x02)
-    {
-        if(RcvFrameCmd.Data[0] == 0x1B)                                         //兼容LX9 Super的版本查询命令
-        {
-            return SUCCESS;
-        }
-        if(RcvFrameCmd.Data[0] == 0x1D)                                         //兼容LX9 Super的固件升级命令
-        {
-            return SUCCESS;
-        }
-    }
-    
-    if(RcvFrameCmd.Header == 0x68 && RcvFrameCmd.Id == 0x04 && RcvFrameCmd.Tail == 0x16 && CmdCrc == RcvFrameCmd.Chk)
-    {
-        if(RcvFrameCmd.Cid == 0x13 || RcvFrameCmd.Cid == 0x14)
-        {
-            DEBUG_PRINTF(DEBUG_STRING, "\r\n");
-            DEBUG_PRINTF(DEBUG_STRING, "Receive Command : %02X %02X %02X %02X ", RcvFrameCmd.Header, RcvFrameCmd.Id, RcvFrameCmd.Cid, RcvFrameCmd.Len);            
-            for(int i=0; i<RcvFrameCmd.Len; i++)
-            {
-                DEBUG_PRINTF(DEBUG_STRING, "%02X ", RcvFrameCmd.Data[i]);
-            }
-            DEBUG_PRINTF(DEBUG_STRING, "%02X %02X \r\n", RcvFrameCmd.Chk, RcvFrameCmd.Tail);
-        }
-        return SUCCESS;
-    }  
+ErrorStatus ReceiveFrameAnalysis(uint8_t *pData, uint8_t Len, uint8_t *pBufIn, uint8_t *pBufOut)
+{    
+    static uint8_t DataInc = 0;
 
+    while(*pBufOut != *pBufIn)
+    {
+        switch(FrameStep)
+        {
+            case MSG_RX_STX:
+                                    if(pData[*pBufOut] == 0x68)         FrameStep = MSG_RX_MODULE_ID;
+                                    else                                FrameStep = MSG_RX_STX;
+                                    (*pBufOut)++;
+                                    break;
+            case MSG_RX_MODULE_ID:
+                                    if(pData[*pBufOut] == 0x04)         FrameStep = MSG_RX_CID;
+                                    else                                FrameStep = MSG_RX_STX;
+                                    (*pBufOut)++;
+                                    break;
+            case MSG_RX_CID:
+                                    RcvFrameCmd.Cid = pData[*pBufOut];
+                                    (*pBufOut)++;
+                                    FrameStep = MSG_RX_DATA_SIZE;
+                                    break;
+            case MSG_RX_DATA_SIZE:
+                                    RcvFrameCmd.Len = pData[*pBufOut];
+                                    (*pBufOut)++;
+                                    FrameStep = MSG_RX_DATA;
+                                    break;      
+            case MSG_RX_DATA:
+                                    if(RcvFrameCmd.Cid == 0x03 && RcvFrameCmd.Len == 0x02)
+                                    {
+                                        RcvFrameCmd.Data[DataInc] = pData[*pBufOut];
+                                        DataInc++;
+                                        (*pBufOut)++;
+                                        
+                                        if(DataInc >= RcvFrameCmd.Len-1)
+                                        {
+                                            DataInc = 0;
+                                            FrameStep = MSG_RX_CHKSUM;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        RcvFrameCmd.Data[DataInc] = pData[*pBufOut];
+                                        DataInc++;
+                                        (*pBufOut)++;
+                                        
+                                        if(DataInc >= RcvFrameCmd.Len)
+                                        {
+                                            DataInc = 0;
+                                            FrameStep = MSG_RX_CHKSUM;
+                                        }
+                                    }
+                                    break;
+            case MSG_RX_CHKSUM:
+                                    RcvFrameCmd.Chk = pData[*pBufOut];
+                                    (*pBufOut)++;
+                                    FrameStep = MSG_RX_ETX;
+                                    break;
+            case MSG_RX_ETX:
+                                    RcvFrameCmd.Tail = pData[*pBufOut];
+                                    (*pBufOut)++;
+                                    FrameStep = MSG_RX_STX;
+                                    
+                                    if(*pBufOut >= Len)
+                                    {
+                                        *pBufOut = 0;
+                                    } 
+                                    
+                                    if(RcvFrameCmd.Tail == 0x16) 
+                                    {   
+                                        if(RcvFrameCmd.Cid == 0x03 && RcvFrameCmd.Len == 0x02 && RcvFrameCmd.Data[0] == 0x1B)
+                                        {
+                                            RcvFrameCmd.Cid = 0x01;
+                                        }
+                                        if(RcvFrameCmd.Cid == 0x03 && RcvFrameCmd.Len == 0x02 && RcvFrameCmd.Data[0] == 0x1C)
+                                        {
+                                            RcvFrameCmd.Cid = 0x02;
+                                        }
+                                        if(RcvFrameCmd.Cid == 0x03 && RcvFrameCmd.Len == 0x02 && RcvFrameCmd.Data[0] == 0x1D)
+                                        {
+                                            RcvFrameCmd.Cid = 0x08;
+                                        }
+
+                                        return SUCCESS;
+                                    }
+                                    break;
+        }
+        
+        if(*pBufOut >= Len)
+        {
+            *pBufOut = 0;
+        } 
+    }
+    
     return ERROR;
 }
 
+
 void Cmd_Process()
 {       
-    if(RcvFrameCmd.Cid == 0x03)
-    {
-        if(RcvFrameCmd.Data[0] == 0x1B) RcvFrameCmd.Cid = 0x01;                 //兼容LX9 Super的版本查询命令
-        if(RcvFrameCmd.Data[0] == 0x1D) RcvFrameCmd.Cid = 0x08;                 //兼容LX9 Super的固件升级命令
-    }
     switch(RcvFrameCmd.Cid)
     {
         case    CMD_EC_COMMUNICATE:             Cmd_EcInfo();                   break;
@@ -955,31 +1341,29 @@ void Cmd_Process()
                 SysMsg.AdjVol.HvFlag = TRUE;                                    //高压调压标志
                 SysMsg.AdjVol.CwFlag = FALSE;
                 
-                SysMsg.AdjVol.AdjVolOpen = FALSE;                               
-                SysMsg.AdjVol.VolMinitor = FALSE;
-                SysMsg.AdjVol.MinAdjVolOpen = FALSE;
-                SysMsg.AdjVol.MinAdjVolCnt = 0;                          
-                SysMsg.AdjVol.TimeFlag = TRUE;                                 
-                SysMsg.AdjVol.Time = 0; 
-                
+                SysMsg.AdjVol.T_PCW = SysMsg.AdjVol.T_NCW = 0;
+                SysMsg.AdjVol.Old_T_PCW = SysMsg.AdjVol.Old_T_NCW = 0;
+
                 Cmd_AdjustVoltageHv();
                 break;
         
         case    CMD_ADJUSTVOLTAGE_CW:
-                SysMsg.AdjVol.HvFlag = FALSE;                                   //低压调压
+                SysMsg.AdjVol.HvFlag = FALSE;                                   
                 SysMsg.AdjVol.CwFlag = TRUE;
                 
-                SysMsg.AdjVol.AdjVolOpen = FALSE;
-                SysMsg.AdjVol.VolMinitor = FALSE;
-                SysMsg.AdjVol.MinAdjVolOpen = FALSE;
-                SysMsg.AdjVol.TimeFlag = TRUE;                                 
-                SysMsg.AdjVol.Time = 0; 
+                SysMsg.AdjVol.T_VPP2 = SysMsg.AdjVol.T_VNN2 = 0;
+                SysMsg.AdjVol.Old_T_VPP2 = SysMsg.AdjVol.Old_T_VNN2 = 0;
                 
                 Cmd_AdjustVoltageCw();
                 break;
                 
+        case    CMD_FAN_DUTY_SET:
+                Cmd_FanControl();
+                break;
                 
-        case    CMS_DEBUGSWITCH:                Cmd_DebugMessageWwitch();       break;
+        case    CMD_DEBUGSWITCH:                
+                Cmd_DebugMessageWwitch();       
+                break;
 
         default:
                 Cmd_InValidData();
@@ -987,62 +1371,3 @@ void Cmd_Process()
     } 
 }
 
-/***********************************************************************************************************************************/
-#define StringSize 2
-
-char *String[] = {
-                    "HV SET",
-                    "CW SET",
-                 };
-
-uint8_t DebugReceiveFrameAnalysis(char *pData)
-{
-
-    for(int i=0; i<StringSize; i++)
-    {
-        if(strncasecmp(pData, String[i], 6) == 0)
-        {
-            return i + 1;
-        }
-    }
-    
-    return 0;
-}
-
-uint8_t Deal_Compare(char *pData, uint8_t DataLen)
-{
-    uint8_t i = 0;
-    
-    i = DebugReceiveFrameAnalysis(pData);
-    
-    switch(i)
-    {
-        case 1:
-                SysMsg.AdjVol.T_VNN1 = SysMsg.AdjVol.T_VPP1 = (pData[7] - '0') * 1000 + (pData[8] - '0') * 100 + (pData[9] - '0') * 10 + (pData[10] - '0');
-                
-                if(DataLen == 16)
-                {
-                    SysMsg.AdjVol.T_VNN2 = SysMsg.AdjVol.T_VPP2 = (pData[12] - '0') * 1000 + (pData[13] - '0') * 100 + (pData[14] - '0') * 10 + (pData[15] - '0');  
-                }
-                if(DataLen == 15)
-                {
-                    SysMsg.AdjVol.T_VNN2 = SysMsg.AdjVol.T_VPP2 = (pData[12] - '0') * 100 + (pData[13] - '0') * 10 + (pData[14] - '0');
-                }
-                SysMsg.AdjVol.HvFlag = TRUE;
-                Calc_TarVol_AlowRange();                        
-                Adjust_Voltage_HV();                                      
-                SysMsg.AdjVol.VolMinitor = TRUE;                      
-                break;
-        case 2: 
-                SysMsg.AdjVol.T_VNN1 = SysMsg.AdjVol.T_VPP1 = (pData[7] - '0') * 1000 + (pData[8] - '0') * 100 + (pData[9] - '0') * 10 + (pData[10] - '0');
-                SysMsg.AdjVol.T_VNN2 = SysMsg.AdjVol.T_VPP2 = (pData[12] - '0') * 100 + (pData[13] - '0') * 10 + (pData[14] - '0'); 
-                
-                SysMsg.AdjVol.CwFlag = TRUE;
-                Calc_TarVol_AlowRange(); 
-                Adjust_Voltage_CW();           
-                SysMsg.AdjVol.VolMinitor = TRUE;       
-                break;
-    }
-    
-    return i;
-}

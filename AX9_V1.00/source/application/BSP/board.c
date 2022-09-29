@@ -4,8 +4,8 @@
 
 extern System_MsgStruct SysMsg;
 
-extern Com_Buffer DebugComRX;
-extern Com_Buffer DebugComTX;
+extern DataBufStruct DebugComRX;
+extern DataBufStruct DebugComTX;
 
 extern Com_Buffer CommuComRX;
 extern Com_Buffer CommuComTX;
@@ -124,20 +124,17 @@ void Board_Bsp_Init()
     SysTick_Iint();
     Gpio_Config();
 
-    #if USE_DEBUG
     Debug_Com_Config();                     //调试串口初始化
-    #else
     Commu_Com_Config();                     //通讯串口初始化--与EC通讯
-    #endif
     
     V_AdcDma_Config();                      //电压采样通道初始化--共14路电压采样, 全部使用ADC3
-    I_AdcDma_Config();                      //电流采样、片内温度采样通道初始化--共2路电流采样, 使用采样电阻将电流转化为电压进行采样, 使用ADC1
+    I_AdcDma_Config();                      //电流采样、片内温度采样通道初始化--共2路电流采样, 使用ADC1
 
     Dac_config(DAC_Channel_1);
     Dac_config(DAC_Channel_2);
     
     Spi_Dac_Config();
-    
+
     Fan_Config();
     TimerConfig();
     

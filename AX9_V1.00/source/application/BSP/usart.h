@@ -7,8 +7,8 @@
 
 typedef struct
 {
-	uint8_t *Data;
-	uint8_t Len;
+    uint8_t *Data;
+    uint8_t Len;
 }Com_Buffer;
 
 #define DEBUG_COM                       UART4

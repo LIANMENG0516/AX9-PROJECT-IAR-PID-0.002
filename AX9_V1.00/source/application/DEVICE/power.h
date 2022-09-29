@@ -9,6 +9,7 @@
 #define BAT_STATE_FULL      2   //充电完成
 #define BAT_STATE_ERROR     3   //电池故障、过压、挂起、睡眠等
 
-void Battery_Power_Read(void);
+void ChargeManagent(void);
+void GetPowerRelatePara(void);
 
 #endif

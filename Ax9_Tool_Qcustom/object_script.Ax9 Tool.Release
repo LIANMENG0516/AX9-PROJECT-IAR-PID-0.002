@@ -1,0 +1,14 @@
+INPUT(
+./release\main.o
+./release\widget.o
+./release\qcustomplot.o
+./release\serialportthread.o
+./release\dialog.o
+./release\widgetdown.o
+./release\qrc_res.o
+./release\moc_widget.o
+./release\moc_qcustomplot.o
+./release\moc_serialportthread.o
+./release\moc_dialog.o
+./release\moc_widgetdown.o
+);

@@ -2,6 +2,9 @@
 
 extern System_MsgStruct SysMsg;
 
+extern uint8_t usbRxBuf[200];
+extern DataBufStruct UsbRxStruct;
+
 OS_CPU_EXT __IO uint32_t receive_count;
 OS_CPU_EXT __ALIGN_BEGIN uint8_t USB_Rx_Buffer[CDC_DATA_MAX_PACKET_SIZE] __ALIGN_END ;
 OS_CPU_EXT CDC_IF_Prop_TypeDef VCP_fops;
@@ -9,8 +12,7 @@ OS_CPU_EXT CDC_IF_Prop_TypeDef VCP_fops;
 __ALIGN_BEGIN uint8_t USB_Tx_Buffer[CDC_DATA_MAX_PACKET_SIZE] __ALIGN_END ;
 
 OS_TCB UsbTaskTcb;
-
-CPU_STK App_Usb_Task_Stk[APP_LED_STK_SIZE];
+CPU_STK App_Usb_Task_Stk[APP_USB_STK_SIZE];
 
 void App_Usb_Task()
 {
@@ -18,14 +20,10 @@ void App_Usb_Task()
 
     while(1)
     {		
-        if(VCP_CheckDataReceived() != 0)
+        if(ReceiveFrameAnalysis(UsbRxStruct.Data, sizeof(usbRxBuf), &UsbRxStruct.pBufIn, &UsbRxStruct.pBufOut) == SUCCESS)
         {
-            if(ReceiveFrameAnalysis(USB_Rx_Buffer, receive_count) == SUCCESS)
-            {
-                SysMsg.Cmd.Channel = USB_CHANNEL;
-                Cmd_Process();                                                  //命令处理 
-            }
-            receive_count = 0;
+            SysMsg.Cmd.Channel = USB_CHANNEL;
+            Cmd_Process();                                                  //命令处理   
         }
 
         OSTimeDlyHMSM(0, 0, 0, 5, OS_OPT_TIME_PERIODIC, &err);

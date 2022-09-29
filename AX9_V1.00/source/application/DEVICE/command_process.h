@@ -3,6 +3,14 @@
 
 #include "gouble.h"
 
+typedef struct
+{
+    uint8_t *Data;
+    uint8_t pBufIn;
+    uint8_t pBufOut;
+    
+}DataBufStruct;
+
 typedef struct 
 {
 	uint8_t		Header;
@@ -12,6 +20,7 @@ typedef struct
 	uint8_t 	*Data;
 	uint8_t		Chk;
 	uint8_t 	Tail;
+        
 }CmdFrameStr;
 
 #define STM_PAGE_SIZE  0x20000                          //128K  
@@ -22,6 +31,12 @@ typedef struct
 
 #define RESPONSE_OK                             1
 #define RESPONSE_FAIL                           0
+
+#define ERROR_CODE0                             0
+#define ERROR_CODE1                             1
+#define ERROR_CODE2                             2
+#define ERROR_CODE3                             3
+#define ERROR_CODE4                             4
 
 #define CMD_FIRMWARE_VERSION                    0x01
 #define CMD_COMPILE_INFO                        0x02
@@ -43,13 +58,14 @@ typedef struct
 #define CMD_VPP2VNN2_DIS                        0x12                 
 #define CMD_ADJUSTVOLTAGE_HV                    0x13
 #define CMD_ADJUSTVOLTAGE_CW                    0x14
+#define CMD_FAN_DUTY_SET                        0X15
 
 #define CMD_EC_COMMUNICATE                      0xA0
 
 #define CMD_INVALID                             0xF0                            //非法命令
 #define TIMEOUT                                 0xF1                            //调压超时
 
-#define CMS_DEBUGSWITCH                         0xFF                            //调压信息输出开关
+#define CMD_DEBUGSWITCH                         0xFF                            //调压信息输出开关
 
 #define SCB_AIRCR       (*(volatile unsigned long *)0xE000ED0C)                 //Reset control Address Register
 #define SCB_RESET_VALUE 0x05FA0004                                              //reset value ,write to SCB_AIRCR  can reset cpu
@@ -58,7 +74,7 @@ void FrameCmdPackage(uint8_t *pBuf);
 void Send_CmdPackage(DMA_Stream_TypeDef* DMAy_Streamx);
 void Cmd_Process(void);
 
-ErrorStatus ReceiveFrameAnalysis(uint8_t *pData, uint8_t DataLen);
+ErrorStatus ReceiveFrameAnalysis(uint8_t *pData, uint8_t Len, uint8_t *pBufIn, uint8_t *pBufOut);
 
 uint8_t DebugReceiveFrameAnalysis(char *pData);
 
@@ -69,6 +85,12 @@ void Calc_TarVol_AlowRange(void);
 void Update_EcInfo(void);
 
 void Reset_Cpu(void);
+
+void UploadErrorCode0(void);
+void UploadErrorCode1(void);
+void UploadErrorCode2(void);
+void UploadErrorCode3(void);
+void UploadErrorCode4(void);
 
 #endif
 

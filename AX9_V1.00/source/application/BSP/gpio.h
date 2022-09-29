@@ -37,11 +37,6 @@
 #define USB_CTRL_PIN              GPIO_Pin_10
 #define USB_CTRL_EN(x)            x ? GPIO_ResetBits(USB_CTRL_PORT, USB_CTRL_PIN) : GPIO_SetBits(USB_CTRL_PORT, USB_CTRL_PIN)
 
-//SPI3_CS3   
-#define SPI3_CS3_PORT             GPIOB
-#define SPI3_CS3_PIN              GPIO_Pin_0
-#define CTL_SPI3_CS3(x)           x ? GPIO_SetBits(SPI3_CS3_PORT, SPI3_CS3_PIN) : GPIO_ResetBits(SPI3_CS3_PORT, SPI3_CS3_PIN)
-
 //SMCLK_2305
 #define SMCLK_2305_PORT           GPIOB
 #define SMCLK_2305_PIN            GPIO_Pin_6

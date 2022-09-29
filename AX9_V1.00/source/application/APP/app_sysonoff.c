@@ -40,9 +40,20 @@ void PowerOn_Sequence()
     
     CTL_VPP1_VNN1_EN(1);    
     CTL_VPP2_VNN2_EN(1);
-    Adjust_Voltage_Vpp1(1000);                                                  //开机默认值                                                  
-    Adjust_Voltage_Vpp2(500);                                                  
-    Adjust_Voltage_Vnn1_Vnn2(1000, 500);  
+    
+    SysMsg.AdjVol.Old_T_VPP1 = SysMsg.AdjVol.T_VPP1 = 1000;
+    SysMsg.AdjVol.Old_T_VNN1 = SysMsg.AdjVol.T_VNN1 = 1000;
+    SysMsg.AdjVol.Old_T_VPP2 = SysMsg.AdjVol.T_VPP2 = 500;
+    SysMsg.AdjVol.Old_T_VNN2 = SysMsg.AdjVol.T_VNN2 = 500;
+    SysMsg.AdjVol.Hv1AdjVolCompleteFlag = BUSY;
+    SysMsg.AdjVol.Hv1AdjVolCompleteFlag = BUSY;
+
+    Adjust_Voltage_Vpp1(SysMsg.AdjVol.T_VPP1);                                                  //开机默认值                                                  
+    Adjust_Voltage_Vpp2(SysMsg.AdjVol.T_VPP2);                                                  
+    Adjust_Voltage_Vnn1_Vnn2(SysMsg.AdjVol.T_VNN1, SysMsg.AdjVol.T_VNN2);  
+    
+    SysMsg.AdjVol.Hv1AdjVolCompleteFlag = IDLE;
+    SysMsg.AdjVol.Hv1AdjVolCompleteFlag = IDLE;
     
 }       
 
@@ -129,10 +140,7 @@ void System_OnCtrl()
                 SysMsg.SystemState = SYSTEM_ON;
                 
                 USBD_Init(&USB_OTG_dev, USB_OTG_FS_CORE_ID, &USR_desc, &USBD_CDC_cb, &USR_cb);
-                USB_CTRL_EN(1);
-                
-                SysMsg.AdjVol.VolInit = TRUE;                                   //开机完成进行高压部分初始化
-                
+                USB_CTRL_EN(1);            
             }
             else
             {
@@ -144,9 +152,7 @@ void System_OnCtrl()
                     SysMsg.SystemState = SYSTEM_ON;
                     
                     USBD_Init(&USB_OTG_dev, USB_OTG_FS_CORE_ID, &USR_desc, &USBD_CDC_cb, &USR_cb);
-                    USB_CTRL_EN(1);                                             //使能USB插入 
-
-                    SysMsg.AdjVol.VolInit = TRUE;
+                    USB_CTRL_EN(1);                                         
                 }
             }                                                        
         }

@@ -2847,10 +2847,13 @@
             <name>$PROJ_DIR$\..\APP\app.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\APP\app_adc.c</name>
+            <name>$PROJ_DIR$\..\APP\app_adjvolcw.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\APP\app_adjvol.c</name>
+            <name>$PROJ_DIR$\..\APP\app_adjvolhv1.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\APP\app_adjvolhv2.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\APP\app_com.c</name>
@@ -2869,9 +2872,6 @@
         </file>
         <file>
             <name>$PROJ_DIR$\..\APP\app_sysonoff.c</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\..\APP\app_temperature.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\APP\app_timer.c</name>
@@ -2896,9 +2896,6 @@
         </file>
         <file>
             <name>$PROJ_DIR$\..\BSP\gpio.c</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\..\BSP\iic.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\BSP\nvic.c</name>
@@ -2931,9 +2928,6 @@
             <name>$PROJ_DIR$\..\DEVICE\adjustvoltage.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\DEVICE\adt7302.c</name>
-        </file>
-        <file>
             <name>$PROJ_DIR$\..\DEVICE\bat1.c</name>
         </file>
         <file>
@@ -2956,9 +2950,6 @@
         </file>
         <file>
             <name>$PROJ_DIR$\..\DEVICE\tlv5626cd.c</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\..\DEVICE\tmp468.c</name>
         </file>
     </group>
     <group>

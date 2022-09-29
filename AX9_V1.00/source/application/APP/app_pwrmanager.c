@@ -12,8 +12,17 @@ void App_PwrManager_Task()
 
     while(1)
     {			
-        Battery_Power_Read();
-        OSTimeDlyHMSM(0, 0, 0, 500, OS_OPT_TIME_PERIODIC, &err);
+        GetPowerRelatePara();
+
+        Bat1_PowerRead();
+        Bat2_PowerRead();
+        
+        Bat1_TempatureRead();                                                   
+        Bat2_TempatureRead();                                                   
+        
+        ChargeManagent();                                                       
+
+        OSTimeDlyHMSM(0, 0, 3, 0, OS_OPT_TIME_PERIODIC, &err);
     }
 }
 

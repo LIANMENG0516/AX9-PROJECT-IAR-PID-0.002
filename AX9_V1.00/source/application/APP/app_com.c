@@ -2,16 +2,10 @@
 
 extern System_MsgStruct SysMsg;
 
-extern CmdFrameStr SenFrameCmd;
-
-extern Com_Buffer CommuComRX;
-extern Com_Buffer CommuComTX;
-
-extern uint8_t Ec_Info[];
-
+extern uint8_t RcvData[100];
+extern DataBufStruct CommuComRX;
 
 OS_TCB ComEcTaskTcb;
-
 CPU_STK App_ComEc_Task_Stk[APP_COMEC_STK_SIZE];
 
 void App_ComEc_Task()
@@ -19,19 +13,12 @@ void App_ComEc_Task()
     OS_ERR err;
 
     while(1)
-    {		
-        if((CommuComRX.Len != 0) && (ReceiveFrameAnalysis(&CommuComRX.Data[0], CommuComRX.Len) == SUCCESS))   //格式化并解析串口数据
+    {	
+        if(ReceiveFrameAnalysis(CommuComRX.Data, sizeof(RcvData), &CommuComRX.pBufIn, &CommuComRX.pBufOut) == SUCCESS)
         {
-            CPU_SR_ALLOC();
-            OS_CRITICAL_ENTER();						//进入临界区, 禁止任务调度
-            
             SysMsg.Cmd.Channel = ECCOM_CHANNEL;
-            memset(CommuComRX.Data, 0, CommuComRX.Len);
-            CommuComRX.Len = 0;
-            Cmd_Process();                                                      //命令处理   
-            
-            OS_CRITICAL_EXIT();							//退出临界区, 允许任务调度
-        }       
+            Cmd_Process();                                                  //命令处理 
+        } 
         
         OSTimeDlyHMSM(0, 0, 0, 5, OS_OPT_TIME_PERIODIC, &err);
     }

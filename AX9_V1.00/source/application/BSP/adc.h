@@ -56,6 +56,7 @@ void Adc3_GetAdjVoltage(void);
 void Adc3_GetFixVoltage(void);
 void Adc1_GetMcuInternalTemperature(void);
 void Adc1_GetOverCurrentVoltage(void);
+void Adc3_GetExternalPowerSupplyVoltage(void);
 
 #endif
 

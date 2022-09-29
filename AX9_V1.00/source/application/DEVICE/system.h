@@ -5,7 +5,7 @@
 
 #include "gouble.h"
 
-#define PID_CTRL                0       //开启PID调节控制
+#define PID_CTRL                0       
 
 #define SYSTEM_OFF              0
 #define SYSTEM_ON               1
@@ -15,61 +15,81 @@
 #define ECCOM_CHANNEL           2
 #define DEBUGCOM_CHANNEL        3
 
-#define FirmwareVersion_H 0x90
-#define FirmwareVersion_L 0x00
+#define FirmwareVersion_H       0x90
+#define FirmwareVersion_L       0x00
 
-#define HardwareVersion_H 0x90
-#define HardwareVersion_L 0x00
+#define HardwareVersion_H       0x90
+#define HardwareVersion_L       0x00
+
+#define IDLE                    0
+#define BUSY                    1
 
 typedef enum {FALSE = 0, TRUE = !FALSE} bool;
 
 typedef struct
 {    
-    bool DebugMessage;    //调试信息开关
+    bool DebugMessage;                  //调试信息开关
   
     bool HvFlag;
     bool CwFlag;
 
-    bool VolInit;               //高压初始化标志位, 开机完成后被置位, 程序检测此标志位进行高压部分的初始化
-    bool VolMinitor;            //高压监控标志位
-    
-    bool AdjVolOpen;            //单次调压开启/关闭标志
-    bool AdjVolSuccess;         //单次调压成功与否标志
-    bool MinAdjVolOpen;         //微调开启/关闭标志
-    
-    bool TimeFlag;              //计时标志
-    
-    bool HV1NeedChange;         
-    bool HV2NeedChange;
-    
-    #if PID_CTRL
-    
-    bool PidOpen;
-    
-    float OldOffSetVpp1;        //偏差
-    float NowOffSetVpp1;
-    uint16_t McuDacVpp1;
-    
-    float OldOffSetVnn1;        //偏差
-    float NowOffSetVnn1;        //偏差
-    uint16_t McuDacVnn1;
-
-    #endif
-
-    uint8_t  MinAdjVolCnt;      //微调次数
+    bool RoughAdjVolCwOpen;             //CW粗调开关
+    bool RoughAdjVolHv1Open;            //HV1粗调开关
+    bool RoughAdjVolHv2Open;            //HV2粗调开关
       
-    uint16_t Time;              //调压时间
-    uint16_t TimeOut;           //调压超时时间
+    bool WaitRoughAdjVolResultCwOpen;   //CW粗调结果等待开关
+    bool WaitRoughAdjVolResultHv1Open;  //HV1粗调结果等待开关
+    bool WaitRoughAdjVolResultHv2Open;  //HV2粗调结果等待开关
+      
+    bool FineAdjVolCwOpen;              //CW微调开关
+    bool FineAdjVolHv1Open;             //HV1微调开关
+    bool FineAdjVolHv2Open;             //HV2微调开关
+
+    bool CwMinitorOpen;                 //CW高压监控开关 
+    bool Hv1MinitorOpen;                //HV1高压监控开关   
+    bool Hv2MinitorOpen;                //HV2高压监控开关
+
+    bool CwTimerOpen;                   //CW计时开关
+    bool Hv1TimerOpen;                  //HV1计时开关
+    bool Hv2TimerOpen;                  //HV2计时开关
+    
+    bool TestTimerOpen;                 //测试计时开关
+
+    uint8_t CwAdjVolCompleteFlag;       //CW低压调压完成标志位  0:调压完成 1:调压忙 
+    uint8_t Hv1AdjVolCompleteFlag;      //HV1高压调压完成标志位 0:调压完成 1:调压忙
+    uint8_t Hv2AdjVolCompleteFlag;      //HV2高压调压完成标志位 0:调压完成 1:调压忙 
+    
+    uint8_t FineAdjVolCwCnt;            //CW微调次数
+    uint8_t FineAdjVolHv1Cnt;           //HV1微调次数
+    uint8_t FineAdjVolHv2Cnt;           //HV2微调次数
+    
+    uint16_t CwTime;                    //调压时间
+    uint16_t CwTimeOut;                 //调压超时时间
+
+    uint16_t Hv1Time;                   //调压时间
+    uint16_t Hv1TimeOut;                //调压超时时间
+    
+    uint16_t Hv2Time;                   //调压时间
+    uint16_t Hv2TimeOut;                //调压超时时间
+    
+    uint16_t TestTime;                  //调压时间
+    uint16_t TestTimeOut;               //调压超时时间
 
     uint16_t T_VPP1;
     uint16_t T_VNN1;
     uint16_t T_VPP2;
     uint16_t T_VNN2;
     
+    uint16_t T_PCW;
+    uint16_t T_NCW;
+    
     uint16_t Old_T_VPP1;
     uint16_t Old_T_VNN1;
     uint16_t Old_T_VPP2;
     uint16_t Old_T_VNN2;
+    
+    uint16_t Old_T_PCW;
+    uint16_t Old_T_NCW;
     
     uint16_t MAX_VPP1;
     uint16_t MIN_VPP1;
@@ -80,6 +100,11 @@ typedef struct
     uint16_t MIN_VPP2;
     uint16_t MAX_VNN2;
     uint16_t MIN_VNN2;
+    
+    uint16_t MAX_PCW;
+    uint16_t MIN_PCW;
+    uint16_t MAX_NCW;
+    uint16_t MIN_NCW;
     
     uint16_t T_McuDacHv1;
     uint16_t T_SpiDacHv1;
@@ -99,6 +124,8 @@ typedef struct
     uint16_t R_VNN1;
     uint16_t R_VPP2;
     uint16_t R_VNN2;
+    uint16_t R_PCW;
+    uint16_t R_NCW;
     
     uint16_t R_AP12V;
     uint16_t R_AN12V;
@@ -112,6 +139,21 @@ typedef struct
     uint16_t R_D0V95;
        
     uint16_t R_IADP;
+    
+    #if PID_CTRL
+    
+    bool PidOpen;
+    
+    float OldOffSetVpp1;                //偏差
+    float NowOffSetVpp1;
+    uint16_t McuDacVpp1;
+    
+    float OldOffSetVnn1;                //偏差
+    float NowOffSetVnn1;                //偏差
+    uint16_t McuDacVnn1;
+
+    #endif
+    
 }Ad_VolStruct;
 
 typedef struct
@@ -128,6 +170,14 @@ typedef struct
 typedef struct
 {    
     bool     DebugMessage;                                                      //调试信息开关
+    
+    uint8_t  CntlMode;
+    
+    uint8_t Duty1;
+    uint8_t Duty2;
+    uint8_t Duty3;
+    uint8_t Duty4;
+    uint8_t Duty5;
     
     uint16_t Rpm1;
     uint16_t Rpm2;

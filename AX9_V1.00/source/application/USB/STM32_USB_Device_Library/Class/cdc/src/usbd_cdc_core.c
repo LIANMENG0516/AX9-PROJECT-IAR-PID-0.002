@@ -62,6 +62,8 @@
 #include "usbd_desc.h"
 #include "usbd_req.h"
 
+#include "board.h"
+
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
   * @{
@@ -716,6 +718,8 @@ uint8_t  usbd_cdc_SOF (void *pdev)
   * @param  pdev: instance
   * @retval None
   */
+
+extern __ALIGN_BEGIN uint8_t USB_Tx_Buffer[CDC_DATA_MAX_PACKET_SIZE] __ALIGN_END ;
 static void Handle_USBAsynchXfer (void *pdev)
 {
   uint16_t USB_Tx_ptr;
@@ -773,7 +777,7 @@ static void Handle_USBAsynchXfer (void *pdev)
         USB_Tx_State = USB_CDC_BUSY;
       }
     }
-    
+
     DCD_EP_Tx (pdev,
                CDC_IN_EP,
                (uint8_t*)&APP_Rx_Buffer[USB_Tx_ptr],

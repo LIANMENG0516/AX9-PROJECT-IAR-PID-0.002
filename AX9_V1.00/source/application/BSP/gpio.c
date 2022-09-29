@@ -45,10 +45,7 @@ void Gpio_Config()
     
     //USB_CTRL
     Gpio_Init(USB_CTRL_PORT, USB_CTRL_PIN, GPIO_Mode_OUT, GPIO_OType_PP, GPIO_PuPd_NOPULL);
-    USB_CTRL_EN(0);                                             //初始化禁止USB插入, 防止电流倒灌
-
-    //SPI3_CS3  
-    Gpio_Init(SPI3_CS3_PORT, SPI3_CS3_PIN, GPIO_Mode_OUT, GPIO_OType_PP, GPIO_PuPd_UP);    
+    USB_CTRL_EN(0);                                                                                     //初始化禁止USB插入, 防止电流倒灌  
     
     //SMCLK_2305
     Gpio_Init(SMCLK_2305_PORT, SMCLK_2305_PIN, GPIO_Mode_OUT, GPIO_OType_OD, GPIO_PuPd_NOPULL);

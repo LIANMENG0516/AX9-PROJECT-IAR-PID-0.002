@@ -206,6 +206,12 @@ void Xmodm_Updata()
 
 void Reset_Cpu()
 {
+    delay_ms(500);
+    delay_ms(500);
+    delay_ms(500);
+    delay_ms(500);
+    delay_ms(500);
+    delay_ms(500);
     SCB_AIRCR = SCB_RESET_VALUE;
 }
 
