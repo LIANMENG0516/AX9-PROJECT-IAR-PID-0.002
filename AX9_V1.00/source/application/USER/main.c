@@ -6,7 +6,7 @@
 //AHB   168MHz
 //APB1  42MHz
 //APB2  84MHz
-
+extern USB_OTG_CORE_HANDLE USB_OTG_dev;
 int main()
 {
     OS_ERR err;

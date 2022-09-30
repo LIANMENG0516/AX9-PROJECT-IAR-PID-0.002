@@ -6,8 +6,8 @@
 typedef struct
 {
     uint8_t *Data;
-    uint8_t pBufIn;
-    uint8_t pBufOut;
+    uint16_t pBufIn;
+    uint16_t pBufOut;
     
 }DataBufStruct;
 
@@ -74,7 +74,7 @@ void FrameCmdPackage(uint8_t *pBuf);
 void Send_CmdPackage(DMA_Stream_TypeDef* DMAy_Streamx);
 void Cmd_Process(void);
 
-ErrorStatus ReceiveFrameAnalysis(uint8_t *pData, uint8_t Len, uint8_t *pBufIn, uint8_t *pBufOut);
+ErrorStatus ReceiveFrameAnalysis(uint8_t *pData, uint16_t Len, uint16_t *pBufIn, uint16_t *pBufOut);
 
 uint8_t DebugReceiveFrameAnalysis(char *pData);
 

@@ -146,18 +146,15 @@ static uint16_t VCP_DataTx(uint8_t *buf, uint32_t len)
   * @retval Result of the operation: USBD_OK if all operations are OK else VCP_FAIL
   */
 
-uint8_t usbRxBuf[200];
+uint8_t usbRxBuf[500];
 DataBufStruct UsbRxStruct = {usbRxBuf, 0, 0};
 
 extern __ALIGN_BEGIN uint8_t USB_Rx_Buffer[CDC_DATA_MAX_PACKET_SIZE] __ALIGN_END ;
-
 extern System_MsgStruct SysMsg;
-
-uint16_t TestCount = 0;
 
 static uint16_t VCP_DataRx(uint8_t * Buf, uint32_t RevLen)
 {	
-    if(UsbRxStruct.pBufIn + RevLen <= sizeof(usbRxBuf))
+    if(UsbRxStruct.pBufIn + RevLen < sizeof(usbRxBuf))
     {
         memcpy(&usbRxBuf[UsbRxStruct.pBufIn], USB_Rx_Buffer, RevLen);
         UsbRxStruct.pBufIn += RevLen;

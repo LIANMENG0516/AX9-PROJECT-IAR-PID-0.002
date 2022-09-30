@@ -874,8 +874,6 @@ void Cmd_ReadAdjustVoltage()
         FrameCmdPackage(DebugComTX.Data);
         Send_CmdPackage(DEBUG_COM_DMAY_STREAMX_TX);
     }       
-    
-    //DEBUG_PRINTF(1, "SysMsg.AdjVol.TestTime = %d \r\n", SysMsg.AdjVol.TestTime);
 }
 
 void Cmd_Vpp1Vnn1EnableRes()
@@ -1214,7 +1212,7 @@ static enum
     
 }FrameStep;
 
-ErrorStatus ReceiveFrameAnalysis(uint8_t *pData, uint8_t Len, uint8_t *pBufIn, uint8_t *pBufOut)
+ErrorStatus ReceiveFrameAnalysis(uint8_t *pData, uint16_t Len, uint16_t *pBufIn, uint16_t *pBufOut)
 {    
     static uint8_t DataInc = 0;
 

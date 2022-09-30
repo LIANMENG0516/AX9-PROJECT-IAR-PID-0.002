@@ -2,7 +2,7 @@
 
 extern System_MsgStruct SysMsg;
 
-extern uint8_t usbRxBuf[200];
+extern uint8_t usbRxBuf[500];
 extern DataBufStruct UsbRxStruct;
 
 OS_CPU_EXT __IO uint32_t receive_count;
